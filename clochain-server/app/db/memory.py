@@ -3,7 +3,7 @@ from __future__ import annotations
 import hmac
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
 
 def _now() -> datetime:
@@ -24,7 +24,7 @@ class EmailVerification:
 class IssueRecord:
   issue_id: str
   short_token: str
-  payload: Dict[str, str]
+  payload: Dict[str, Any]
   signature: str
   created_at: datetime = field(default_factory=_now)
 

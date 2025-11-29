@@ -1,0 +1,24 @@
+# Environment & secrets
+.env
+*.pem
+*_SECRET.txt
+
+# Python runtime artifacts
+__pycache__/
+*.py[cod]
+*.pyo
+.Python
+.pytest_cache/
+.mypy_cache/
+
+# Virtual environments
+env/
+venv/
+.venv/
+ENV/
+
+# Tooling
+.ruff_cache/
+.coverage
+coverage.xml
+pip-wheel-metadata/

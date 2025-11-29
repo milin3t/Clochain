@@ -18,21 +18,20 @@ class EmailVerifyResponse(BaseModel):
 
 
 class IssueRequest(BaseModel):
-  brand: str
-  productId: str
-  purchaseAt: str
-
-
-class IssueResponse(BaseModel):
-  issueId: str
-  q: str
-  qrBase64: str
+  product_type: str = Field(..., alias="product_type")
 
 
 class IssuePayload(BaseModel):
-  brand: str
-  productId: str
-  purchaseAt: str
-  did: str
+  issuer: EmailStr
+  product_type: str
+  timestamp: int
   nonce: str
+
+
+class IssueResponse(BaseModel):
+  short_token: str
+  payload: IssuePayload
   signature: str
+  qr_base64: str = Field(..., alias="qr_base64")
+
+  model_config = {"populate_by_name": True}

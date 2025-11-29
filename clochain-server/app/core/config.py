@@ -15,6 +15,7 @@ class Settings(BaseModel):
   jwt_exp_minutes: int = Field(default=60)
   hmac_secret: str = Field(default=os.getenv("HMAC_SECRET", "replace-me"))
   cors_origins_raw: str = Field(default=os.getenv("CORS_ORIGINS", "*"))
+  domain: str = Field(default=os.getenv("DOMAIN", "clochain.app"))
 
   @property
   def cors_origins(self) -> list[str]:
