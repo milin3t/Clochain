@@ -1,0 +1,3 @@
+"""
+CloChain FastAPI application package.
+"""
