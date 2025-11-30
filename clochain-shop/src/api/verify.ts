@@ -4,7 +4,6 @@ import type { VerifyRequest, VerifyResponse } from '../types/verify'
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
 
 if (!API_BASE_URL) {
-  // eslint-disable-next-line no-console
   console.warn('VITE_API_BASE_URL is not defined. /verify requests will fail.')
 }
 
@@ -13,11 +12,12 @@ const client = axios.create({
 })
 
 export async function verifyProduct(params: VerifyRequest): Promise<VerifyResponse> {
+  const requestParams: Record<string, string> = { q: params.token }
+  if (params.sig) {
+    requestParams.sig = params.sig
+  }
   const { data } = await client.get<VerifyResponse>('/verify', {
-    params: {
-      token: params.token,
-      sig: params.sig,
-    },
+    params: requestParams,
   })
   return data
 }

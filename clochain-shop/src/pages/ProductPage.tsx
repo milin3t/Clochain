@@ -12,7 +12,7 @@ const ProductPage = () => {
   const { brand: brandSlug, productId } = useParams<{ brand?: string; productId?: string }>()
   const brand = brandSlug ? findBrand(brandSlug) : undefined
   const product = brand && productId ? findProduct(brand.slug, productId) : null
-  const { walletAddress, login } = useAuth()
+  const { walletAddress, login, sessionToken, ensureSession } = useAuth()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [result, setResult] = useState<IssueResponse | null>(null)
   const [loading, setLoading] = useState(false)
@@ -61,14 +61,14 @@ const ProductPage = () => {
     setResult(null)
     setCopied(false)
     try {
+      const token = sessionToken ?? (await ensureSession())
       const response = await issueProduct(
         {
           brand: brand.slug,
           productId: product.id,
           purchaseAt: new Date().toISOString(),
-          ownerWallet: walletAddress,
         },
-        walletAddress,
+        token,
       )
       setResult(response)
     } catch (err) {
@@ -77,6 +77,14 @@ const ProductPage = () => {
           (err.response?.data as { detail?: string })?.detail ||
           'QR 발급 중 문제가 발생했습니다.'
         setError(detail)
+      } else if (err instanceof Error) {
+        if (err.message === 'WALLET_REQUIRED') {
+          setError('지갑 세션을 확인할 수 없습니다. 다시 로그인해주세요.')
+        } else if (err.message === 'SIGNING_UNAVAILABLE') {
+          setError('지갑 서명이 지원되지 않습니다. 연결을 재설정한 뒤 다시 시도해주세요.')
+        } else {
+          setError(err.message || '알 수 없는 오류로 실패했습니다.')
+        }
       } else {
         setError('알 수 없는 오류로 실패했습니다.')
       }

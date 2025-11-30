@@ -4,7 +4,6 @@ import type { IssueRequest, IssueResponse } from '../types/issue'
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
 
 if (!API_BASE_URL) {
-  // eslint-disable-next-line no-console
   console.error('VITE_API_BASE_URL is not set. Please define it in your .env file.')
 }
 
@@ -14,20 +13,15 @@ const client = axios.create({
 
 export async function issueProduct(
   payload: IssueRequest,
-  walletAddress: string,
+  accessToken: string,
 ): Promise<IssueResponse> {
-  if (!walletAddress) {
-    throw new Error('WALLET_REQUIRED')
+  if (!accessToken) {
+    throw new Error('SESSION_REQUIRED')
   }
 
-  const body: IssueRequest = {
-    ...payload,
-    ownerWallet: walletAddress,
-  }
-
-  const { data } = await client.post<IssueResponse>('/issue', body, {
+  const { data } = await client.post<IssueResponse>('/issue', payload, {
     headers: {
-      Authorization: `Bearer ${walletAddress}`,
+      Authorization: `Bearer ${accessToken}`,
     },
   })
 
