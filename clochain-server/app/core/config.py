@@ -16,7 +16,8 @@ class Settings:
     self.hmac_secret = os.getenv("HMAC_SECRET", "dev-hmac")
     self.database_url = os.getenv("DATABASE_URL", "sqlite:///./clochain.db")
     self.pinata_api_key = os.getenv("PINATA_API_KEY", "pinata-key")
-    self.pinata_secret = os.getenv("PINATA_SECRET", "pinata-secret")
+    self.pinata_secret = os.getenv("PINATA_API_SECRET") or os.getenv("PINATA_SECRET", "pinata-secret")
+    self.pinata_jwt = os.getenv("PINATA_JWT", "")
 
 
 @lru_cache

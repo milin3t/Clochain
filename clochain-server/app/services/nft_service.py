@@ -10,7 +10,7 @@ from app.services.pinata_service import PinataService
 class NFTService:
   def __init__(self, session, pinata: PinataService | None = None):
     self.session = session
-    self.pinata = pinata or PinataService(settings.pinata_api_key, settings.pinata_secret)
+    self.pinata = pinata or PinataService(settings.pinata_api_key, settings.pinata_secret, settings.pinata_jwt)
 
   def create_metadata(self, short_token: str):
     payload, _ = decode_short_token(short_token)
