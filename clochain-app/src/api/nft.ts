@@ -21,43 +21,24 @@ export interface NFTItem {
   tokenURI?: string
 }
 
-export interface MetadataResponse {
-  cid: string
-  metadata: Record<string, unknown>
-  payload: Record<string, unknown>
-}
-
-export interface RecordResponse {
-  ok: boolean
-  tokenId: string
-  walletAddress: string
-  cid: string
-}
-
 export interface TransferRecordResponse {
   ok: boolean
   txHash: string
 }
 
-export async function buildNFTMetadata(shortToken: string) {
-  const { data } = await client.post<MetadataResponse>('/nft/metadata', {
-    short_token: shortToken,
-  })
-  return data
+export interface RegisterResponse {
+  ok: boolean
+  tokenId: string
+  cid: string
+  metadata: Record<string, unknown>
+  txHash?: string
+  blockNumber?: number | null
 }
 
-export async function recordNFTMint(
-  payload: {
-    tokenId: string
-    walletAddress: string
-    cid: string
-    payload: Record<string, unknown>
-  },
-  sessionToken: string,
-) {
-  const { data } = await client.post<RecordResponse>(
-    '/nft/record',
-    payload,
+export async function registerNFT(shortToken: string, sessionToken: string) {
+  const { data } = await client.post<RegisterResponse>(
+    '/nft/register',
+    { short_token: shortToken },
     { headers: authHeader(sessionToken) },
   )
   return data

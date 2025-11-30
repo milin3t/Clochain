@@ -35,6 +35,7 @@ npm build
 ```
 VITE_CLOCHAIN_API_URL=<FastAPI base URL>
 VITE_TW_CLIENT_ID=<thirdweb client id>
+VITE_CONTRACT_ADDRESS=<CloChainAuthenticity contract on Polygon Amoy>
 ```
 
 필요 시 Polygon Amoy RPC, Pinata CID 뷰어 등의 추가 값을 주입하면 됩니다.

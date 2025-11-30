@@ -2,8 +2,7 @@ import { Scanner, type IDetectedBarcode } from '@yudiel/react-qr-scanner'
 import { useCallback, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Header from '../components/Header'
-import { buildNFTMetadata, recordNFTMint } from '../api/nft'
-import { mintAuthenticityNFT } from '../lib/nftActions'
+import { registerNFT } from '../api/nft'
 import { useAuth } from '../context/AuthContext'
 
 const extractShortToken = (value: string) => {
@@ -39,23 +38,10 @@ const ScanPage = () => {
       setMessage('QR 정보를 확인하는 중입니다...')
       try {
         const sessionToken = await ensureSession()
-        const metadataResponse = await buildNFTMetadata(token)
-        const { tokenId, txHash } = await mintAuthenticityNFT({
-          cid: metadataResponse.cid,
-          metadata: metadataResponse.metadata,
-          payload: metadataResponse.payload,
-        })
-        await recordNFTMint(
-          {
-            tokenId,
-            walletAddress,
-            cid: metadataResponse.cid,
-            payload: metadataResponse.payload,
-          },
-          sessionToken,
-        )
+        const result = await registerNFT(token, sessionToken)
+        const previewHash = result.txHash ? `${result.txHash.slice(0, 10)}...` : '체인 확인 필요'
         setStatus('success')
-        setMessage(`NFT 등록이 완료되었습니다! 트랜잭션: ${txHash.slice(0, 10)}...`)
+        setMessage(`NFT 등록이 완료되었습니다! 트랜잭션: ${previewHash}`)
         setTimeout(() => {
           navigate('/wardrobe')
         }, 1200)

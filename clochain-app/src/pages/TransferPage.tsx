@@ -1,5 +1,6 @@
 import { type FormEvent, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
+import { useActiveAccount } from 'thirdweb/react'
 import Header from '../components/Header'
 import { recordNFTTransfer } from '../api/nft'
 import { transferAuthenticityNFT } from '../lib/nftActions'
@@ -18,6 +19,7 @@ const TransferPage = () => {
   const { walletAddress, ensureSession } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
+  const account = useActiveAccount()
   const [recipient, setRecipient] = useState('')
   const [status, setStatus] = useState<'idle' | 'pending' | 'success' | 'error'>('idle')
   const [message, setMessage] = useState('')
@@ -42,10 +44,14 @@ const TransferPage = () => {
     setMessage('소유권 이전을 진행합니다...')
     try {
       const sessionToken = await ensureSession()
-      const { txHash } = await transferAuthenticityNFT({
+      if (!account) {
+        throw new Error('WALLET_REQUIRED')
+      }
+      const { txHash, blockNumber } = await transferAuthenticityNFT({
         tokenId,
         fromWallet: walletAddress,
         toWallet: normalized,
+        account,
       })
       await recordNFTTransfer(
         {
@@ -53,6 +59,7 @@ const TransferPage = () => {
           fromWallet: walletAddress,
           toWallet: normalized,
           txHash,
+          blockNumber,
         },
         sessionToken,
       )
@@ -63,7 +70,17 @@ const TransferPage = () => {
     } catch (error) {
       console.error(error)
       setStatus('error')
-      setMessage('이전에 실패했습니다. 지갑 주소를 확인하고 다시 시도하세요.')
+      let detail = '이전에 실패했습니다. 지갑 주소를 확인하고 다시 시도하세요.'
+      if (error instanceof Error) {
+        if (error.message === 'WALLET_REQUIRED') {
+          detail = '지갑 연결이 필요합니다. 로그인 후 다시 시도하세요.'
+        } else if (error.message === 'WALLET_MISMATCH') {
+          detail = '현재 로그인한 지갑이 NFT 소유자와 다릅니다.'
+        } else if (error.message === 'INVALID_TOKEN_ID') {
+          detail = '잘못된 토큰 ID입니다. 다시 시도하세요.'
+        }
+      }
+      setMessage(detail)
     }
   }
 
