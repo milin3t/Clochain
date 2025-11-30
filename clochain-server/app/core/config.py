@@ -2,29 +2,26 @@ import os
 from functools import lru_cache
 
 from dotenv import load_dotenv
-from pydantic import BaseModel, Field
 
 load_dotenv()
 
 
-class Settings(BaseModel):
-  app_name: str = Field(default="CloChain Server")
-  environment: str = Field(default=os.getenv("ENVIRONMENT", "local"))
-  jwt_secret: str = Field(default=os.getenv("JWT_SECRET", "change-me"))
-  jwt_algorithm: str = Field(default="HS256")
-  jwt_exp_minutes: int = Field(default=60)
-  hmac_secret: str = Field(default=os.getenv("HMAC_SECRET", "replace-me"))
-  cors_origins_raw: str = Field(default=os.getenv("CORS_ORIGINS", "*"))
-  domain: str = Field(default=os.getenv("DOMAIN", "clochain.app"))
-
-  @property
-  def cors_origins(self) -> list[str]:
-    if self.cors_origins_raw == "*":
-      return ["*"]
-    return [origin.strip() for origin in self.cors_origins_raw.split(",") if origin.strip()]
+class Settings:
+  def __init__(self) -> None:
+    self.app_name = os.getenv("APP_NAME", "CloChain Server v2")
+    self.cors_origins = os.getenv("CORS_ORIGINS", "*").split(",")
+    self.jwt_secret = os.getenv("JWT_SECRET", "dev-secret")
+    self.jwt_algorithm = os.getenv("JWT_ALGORITHM", "HS256")
+    self.jwt_exp_minutes = int(os.getenv("JWT_EXP_MINUTES", "30"))
+    self.hmac_secret = os.getenv("HMAC_SECRET", "dev-hmac")
+    self.database_url = os.getenv("DATABASE_URL", "sqlite:///./clochain.db")
+    self.pinata_api_key = os.getenv("PINATA_API_KEY", "pinata-key")
+    self.pinata_secret = os.getenv("PINATA_SECRET", "pinata-secret")
+    self.owner_private_key = os.getenv("OWNER_PRIVATE_KEY", "0xowner")
+    self.polygon_rpc_url = os.getenv("POLYGON_RPC_URL", "https://rpc-amoy.polygon.technology")
 
 
-@lru_cache(1)
+@lru_cache
 def get_settings() -> Settings:
   return Settings()
 
