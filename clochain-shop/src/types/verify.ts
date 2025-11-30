@@ -8,4 +8,5 @@ export interface VerifyResponse {
   reason?: string
   payload?: Record<string, unknown>
   signature?: string
+  registered?: boolean
 }

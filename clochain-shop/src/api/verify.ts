@@ -11,13 +11,29 @@ const client = axios.create({
   baseURL: API_BASE_URL,
 })
 
+type VerifyResponseRaw = Partial<VerifyResponse> & {
+  valid?: boolean
+}
+
 export async function verifyProduct(params: VerifyRequest): Promise<VerifyResponse> {
   const requestParams: Record<string, string> = { q: params.token }
   if (params.sig) {
     requestParams.sig = params.sig
   }
-  const { data } = await client.get<VerifyResponse>('/verify', {
+  const { data } = await client.get<VerifyResponseRaw>('/verify', {
     params: requestParams,
   })
-  return data
+  const ok =
+    typeof data.ok === 'boolean'
+      ? data.ok
+      : typeof data.valid === 'boolean'
+        ? data.valid
+        : false
+  return {
+    ok,
+    reason: data.reason,
+    payload: data.payload,
+    signature: data.signature,
+    registered: data.registered,
+  }
 }

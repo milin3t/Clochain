@@ -94,6 +94,12 @@ const VerifyPage = () => {
                   <p className="text-sm text-ink break-words">{result.signature}</p>
                 </div>
               )}
+              {typeof result.registered === 'boolean' && (
+                <div>
+                  <p className="text-xs uppercase tracking-[0.4em] text-gray-500">Registered</p>
+                  <p className="text-sm text-ink">{result.registered ? 'YES' : 'NO'}</p>
+                </div>
+              )}
               {Object.entries(result.payload).map(([key, value]) => (
                 <div key={key}>
                   <p className="text-xs uppercase tracking-[0.4em] text-gray-500">{key}</p>
