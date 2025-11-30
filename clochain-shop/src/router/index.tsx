@@ -1,4 +1,5 @@
-import { Navigate, Outlet, Route, Routes } from 'react-router-dom'
+import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom'
+import { useAuth } from '../auth/useAuth'
 import Header from '../components/Header'
 import ShopHome from '../pages/ShopHome'
 import LoginPage from '../pages/LoginPage'
@@ -19,6 +20,25 @@ const AppLayout = () => (
   </div>
 )
 
+const RequireAuth = ({ children }: { children: JSX.Element }) => {
+  const { isAuthenticated, isInitializing } = useAuth()
+  const location = useLocation()
+
+  if (isInitializing) {
+    return (
+      <div className="page-shell py-10 text-center text-sm text-gray-500">
+        Web3Auth 세션을 확인하는 중입니다...
+      </div>
+    )
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/shop/login" replace state={{ from: location.pathname }} />
+  }
+
+  return children
+}
+
 const AppRouter = () => (
   <Routes>
     <Route path="/" element={<Navigate to="/shop" replace />} />
@@ -27,7 +47,14 @@ const AppRouter = () => (
       <Route path="login" element={<LoginPage />} />
       <Route path="verify" element={<VerifyPage />} />
       <Route path=":brand" element={<ShopBrand />} />
-      <Route path=":brand/issue" element={<IssuePage />} />
+      <Route
+        path=":brand/issue"
+        element={
+          <RequireAuth>
+            <IssuePage />
+          </RequireAuth>
+        }
+      />
       <Route path=":brand/:productId" element={<ProductPage />} />
     </Route>
     <Route path="*" element={<Navigate to="/shop" replace />} />

@@ -1,29 +1,112 @@
+import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import axios from 'axios'
 import Button from '../components/Button'
 import Input from '../components/Input'
+import { verifyProduct } from '../api/verify'
+import type { VerifyResponse } from '../types/verify'
 
 const VerifyPage = () => {
+  const [searchParams] = useSearchParams()
+  const initialToken = useMemo(() => searchParams.get('token') ?? '', [searchParams])
+  const initialSig = useMemo(() => searchParams.get('sig') ?? '', [searchParams])
+
+  const [token, setToken] = useState(initialToken)
+  const [sig, setSig] = useState(initialSig)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [result, setResult] = useState<VerifyResponse | null>(null)
+
+  useEffect(() => {
+    if (initialToken && initialSig) {
+      handleVerify(initialToken, initialSig, true)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialToken, initialSig])
+
+  const handleVerify = async (tokenValue?: string, sigValue?: string, auto = false) => {
+    const t = tokenValue ?? token
+    const s = sigValue ?? sig
+    if (!t || !s) {
+      setError('token과 sig 값을 모두 입력해주세요.')
+      return
+    }
+    setLoading(true)
+    setError(null)
+    setResult(null)
+    try {
+      const response = await verifyProduct({ token: t, sig: s })
+      setResult(response)
+      if (!response.ok) {
+        setError(response.reason || '정품 정보를 확인할 수 없습니다.')
+      }
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        const detail =
+          (err.response?.data as { detail?: string; message?: string })?.detail ||
+          err.message ||
+          '검증 요청 실패'
+        setError(detail)
+      } else {
+        setError('알 수 없는 오류가 발생했습니다.')
+      }
+    } finally {
+      setLoading(false)
+      if (!auto) {
+        window.history.replaceState(null, '', `/shop/verify?token=${encodeURIComponent(t)}&sig=${encodeURIComponent(s)}`)
+      }
+    }
+  }
+
   return (
-    <section className="grid gap-8 md:grid-cols-2">
-      <div className="space-y-6 rounded-[32px] border border-white/40 bg-white/70 p-8">
-        <div className="space-y-2">
-          <p className="text-xs uppercase tracking-[0.5em] text-gray-500">Verify</p>
-          <h3 className="text-2xl tracking-[0.3em]">정품 여부 확인</h3>
-          <p className="text-sm text-gray-600">
-            QR에서 받은 short token 값을 입력하면 인증 결과가 아래 카드에 표시될 예정입니다.
-          </p>
-        </div>
-        <Input label="short token (q)" placeholder="ex. ct-001-9fd20" />
-        <Button type="button">정품 여부 확인</Button>
+    <section className="space-y-8">
+      <div className="space-y-2 text-center">
+        <p className="text-xs uppercase tracking-[0.5em] text-gray-500">Verification</p>
+        <h1 className="text-4xl tracking-[0.3em]">정품 인증 검증</h1>
+        <p className="text-sm text-gray-600">
+          QR을 스캔하면 token과 sig 값이 자동으로 채워집니다. 값이 없으면 수동으로 입력해 검증하세요.
+        </p>
       </div>
-      <div className="rounded-[32px] border border-dashed border-ink/10 bg-pearl/60 p-8 text-sm text-gray-600">
-        <p className="text-xs uppercase tracking-[0.5em] text-gray-500">Result</p>
-        <h4 className="text-xl tracking-[0.3em]">CloChain Authentic</h4>
-        <ul className="mt-4 space-y-2">
-          <li>브랜드: Celine</li>
-          <li>Product ID: ct-001</li>
-          <li>소유자 DID: did:email:celine.client@example.com</li>
-          <li>상태: Authentic / Transferable</li>
-        </ul>
+
+      <div className="grid gap-8 md:grid-cols-2">
+        <div className="space-y-6 rounded-[32px] border border-white/40 bg-white/80 p-8">
+          <Input
+            label="token"
+            placeholder="short token"
+            value={token}
+            onChange={(e) => setToken(e.target.value)}
+          />
+          <Input
+            label="sig"
+            placeholder="QR signature"
+            value={sig}
+            onChange={(e) => setSig(e.target.value)}
+          />
+          <Button type="button" onClick={() => handleVerify()} disabled={loading}>
+            {loading ? '검증 중...' : '검증하기'}
+          </Button>
+          {error && <p className="rounded-3xl bg-red-50 p-3 text-sm text-red-600">{error}</p>}
+        </div>
+
+        <div className="rounded-[32px] border border-dashed border-ink/10 bg-pearl/60 p-8 text-sm text-gray-600">
+          <p className="text-xs uppercase tracking-[0.5em] text-gray-500">Result</p>
+          {loading && <p className="mt-4 text-sm text-gray-500">검증 중...</p>}
+          {!loading && result?.ok && result.payload ? (
+            <div className="mt-4 space-y-3">
+              {Object.entries(result.payload).map(([key, value]) => (
+                <div key={key}>
+                  <p className="text-xs uppercase tracking-[0.4em] text-gray-500">{key}</p>
+                  <p className="text-sm text-ink break-words">{String(value)}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            !loading && !error && <p className="mt-4 text-sm text-gray-500">검증 결과가 여기에 표시됩니다.</p>
+          )}
+          {!loading && !result?.ok && error && (
+            <p className="mt-4 text-sm text-red-600">Reason: {error}</p>
+          )}
+        </div>
       </div>
     </section>
   )

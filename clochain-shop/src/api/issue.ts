@@ -12,21 +12,12 @@ const client = axios.create({
   baseURL: API_BASE_URL,
 })
 
-export async function issueProduct(productType: string): Promise<IssueResponse> {
-  const token = localStorage.getItem('access_token')
-  if (!token) {
-    throw new Error('AUTH_REQUIRED')
+export async function issueProduct(payload: IssueRequest): Promise<IssueResponse> {
+  if (!payload.ownerWallet) {
+    throw new Error('WALLET_REQUIRED')
   }
 
-  const payload: IssueRequest = {
-    product_type: productType,
-  }
-
-  const { data } = await client.post<IssueResponse>('/issue', payload, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  })
+  const { data } = await client.post<IssueResponse>('/issue', payload)
 
   return data
 }
