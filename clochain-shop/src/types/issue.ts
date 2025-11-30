@@ -2,7 +2,7 @@ export interface IssueRequest {
   brand: string
   productId: string
   purchaseAt: string
-  ownerWallet: string
+  ownerWallet?: string
 }
 
 export interface IssuePayload {

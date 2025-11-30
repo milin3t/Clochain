@@ -8,37 +8,41 @@ import type { VerifyResponse } from '../types/verify'
 
 const VerifyPage = () => {
   const [searchParams] = useSearchParams()
-  const initialToken = useMemo(() => searchParams.get('token') ?? '', [searchParams])
-  const initialSig = useMemo(() => searchParams.get('sig') ?? '', [searchParams])
+  const initialToken = useMemo(
+    () => searchParams.get('q') ?? searchParams.get('token') ?? '',
+    [searchParams],
+  )
 
   const [token, setToken] = useState(initialToken)
-  const [sig, setSig] = useState(initialSig)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<VerifyResponse | null>(null)
 
   useEffect(() => {
-    if (initialToken && initialSig) {
-      handleVerify(initialToken, initialSig, true)
+    if (initialToken) {
+      void handleVerify(initialToken, true)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialToken, initialSig])
+  }, [initialToken])
 
-  const handleVerify = async (tokenValue?: string, sigValue?: string, auto = false) => {
-    const t = tokenValue ?? token
-    const s = sigValue ?? sig
-    if (!t || !s) {
-      setError('token과 sig 값을 모두 입력해주세요.')
+  const handleVerify = async (tokenValue?: string, auto = false) => {
+    const trimmedToken = (tokenValue ?? token).trim()
+    if (!trimmedToken) {
+      setError('short token을 입력해주세요.')
       return
     }
     setLoading(true)
     setError(null)
     setResult(null)
     try {
-      const response = await verifyProduct({ token: t, sig: s })
+      const response = await verifyProduct({ token: trimmedToken })
       setResult(response)
       if (!response.ok) {
         setError(response.reason || '정품 정보를 확인할 수 없습니다.')
+      }
+      if (!auto) {
+        const nextUrl = `/shop/verify?q=${encodeURIComponent(trimmedToken)}`
+        window.history.replaceState(null, '', nextUrl)
       }
     } catch (err) {
       if (axios.isAxiosError(err)) {
@@ -52,9 +56,6 @@ const VerifyPage = () => {
       }
     } finally {
       setLoading(false)
-      if (!auto) {
-        window.history.replaceState(null, '', `/shop/verify?token=${encodeURIComponent(t)}&sig=${encodeURIComponent(s)}`)
-      }
     }
   }
 
@@ -64,7 +65,7 @@ const VerifyPage = () => {
         <p className="text-xs uppercase tracking-[0.5em] text-gray-500">Verification</p>
         <h1 className="text-4xl tracking-[0.3em]">정품 인증 검증</h1>
         <p className="text-sm text-gray-600">
-          QR을 스캔하면 token과 sig 값이 자동으로 채워집니다. 값이 없으면 수동으로 입력해 검증하세요.
+          QR을 스캔하면 short token(q)이 자동으로 채워집니다. 값이 없으면 수동으로 입력해 검증하세요.
         </p>
       </div>
 
@@ -75,12 +76,6 @@ const VerifyPage = () => {
             placeholder="short token"
             value={token}
             onChange={(e) => setToken(e.target.value)}
-          />
-          <Input
-            label="sig"
-            placeholder="QR signature"
-            value={sig}
-            onChange={(e) => setSig(e.target.value)}
           />
           <Button type="button" onClick={() => handleVerify()} disabled={loading}>
             {loading ? '검증 중...' : '검증하기'}
@@ -93,6 +88,12 @@ const VerifyPage = () => {
           {loading && <p className="mt-4 text-sm text-gray-500">검증 중...</p>}
           {!loading && result?.ok && result.payload ? (
             <div className="mt-4 space-y-3">
+              {result.signature && (
+                <div>
+                  <p className="text-xs uppercase tracking-[0.4em] text-gray-500">Signature</p>
+                  <p className="text-sm text-ink break-words">{result.signature}</p>
+                </div>
+              )}
               {Object.entries(result.payload).map(([key, value]) => (
                 <div key={key}>
                   <p className="text-xs uppercase tracking-[0.4em] text-gray-500">{key}</p>
