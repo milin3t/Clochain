@@ -1,3 +1,5 @@
+import os
+
 from app.api.routes import auth, issue, verify
 from app.core.config import settings
 from fastapi import FastAPI
@@ -23,6 +25,12 @@ def create_app() -> FastAPI:
   app.include_router(issue.router, tags=["issue"])
   app.include_router(verify.router, tags=["verify"])
 
+  @app.get("/debug")
+  def debug():
+      return {
+          "cwd": os.getcwd(),
+          "files": os.listdir(".")
+      }
   @app.get("/ping")
   async def ping():
     return {"pong": True}
