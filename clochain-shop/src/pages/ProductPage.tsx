@@ -5,7 +5,7 @@ import { findBrand, findProduct } from '../data/brands'
 const ProductPage = () => {
   const { brand: brandSlug, productId } = useParams<{ brand?: string; productId?: string }>()
   const brand = brandSlug ? findBrand(brandSlug) : undefined
-  const product = brand && productId ? findProduct(brandSlug, productId) : null
+  const product = brand && productId ? findProduct(brand.slug, productId) : null
 
   if (!brand || !product) {
     return (
