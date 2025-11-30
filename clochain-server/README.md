@@ -1,15 +1,14 @@
 # CloChain Server (FastAPI)
 
-FastAPI 백엔드로 CloChain v2의 DID 로그인, QR 발급/검증, Pinata 메타데이터 생성, NFT/Transfer 기록을 담당합니다. 지갑(Web3Auth)이 트랜잭션을 직접 서명하고, 서버는 서명/검증/DB 기록만 수행한다는 AGENTS 명세를 그대로 구현합니다.
+FastAPI 백엔드로 CloChain v2의 DID 로그인, QR 발급/검증, Pinata 메타데이터 생성, NFT/Transfer 기록을 담당합니다. QR short_token 검증 후 서버 지갑으로 mint를 실행하고, 클라이언트는 transfer 시에만 직접 서명합니다.
 
 ## 주요 기능
 
-- `POST /auth/wallet/request` + `POST /auth/wallet/verify`로 wallet DID 세션 발급
-- `POST /issue`에서 QR payload 조립 + HMAC 서명 + short_token 생성
-- `GET /verify`로 short_token 복원 및 payload 진위 확인
-- `POST /nft/metadata` 호출 시 Pinata(IPFS) 업로드 → CID 반환
-- `POST /nft/record` / `POST /nft/record-transfer`로 온체인 mint/transfer 결과를 DB에 기록
-- Polygon 상의 `ownerOf` 조회, metadata 제공 등 모든 정보 조회 API의 근간
+- wallet DID 세션 발급: `POST /auth/wallet/request`, `POST /auth/wallet/verify`
+- QR 발급/검증: `POST /issue`, `GET /verify`
+- `/nft/register`에서 short_token → metadata → 서버 지갑 mint → tokenId/txHash 응답
+- `/nft/record-transfer`와 `/nft/me`로 체인 소유권 변동을 DB와 연동
+- Polygon Amoy `ownerOf` 조회, metadata 전달
 
 ## 환경 변수
 
@@ -33,20 +32,12 @@ PINATA_JWT=...          # 선택, Bearer 사용
 
 ```
 RPC_URL=https://polygon-amoy.g.alchemy.com/v2/<api-key>
-SERVER_PRIVATE_KEY=0x....
-SERVER_WALLET_ADDRESS=0x....
-CONTRACT_ADDRESS=0x....
+SERVER_PRIVATE_KEY=0x...
+SERVER_WALLET_ADDRESS=0x...
+CONTRACT_ADDRESS=0x...
 ```
 
-서버는 `scripts/ethers-runner.mjs`를 통해 Node/ethers v6로 `mintAuthenticityToken`을 실행합니다.  
-따라서 FastAPI 디렉터리에서도 npm 의존성을 설치해야 하며(Railway 등 배포 환경 포함), 다음 명령을 추가로 실행하세요:
-
-```bash
-cd clochain-server
-npm install
-```
-
-Railway의 빌드 설정에는 `pip install -r requirements.txt` 뒤에 `npm install`을 추가 커맨드로 넣어 두면 됩니다.
+서버는 web3.py를 사용해 EOA로 직접 `mintAuthenticityToken` 트랜잭션을 전송합니다.
 
 ## 로컬 실행
 
@@ -55,7 +46,6 @@ cd clochain-server
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-npm install
 uvicorn app.main:app --reload
 ```
 
@@ -68,12 +58,12 @@ uvicorn app.main:app --reload
 | 인증 | `POST /auth/wallet/request` | walletAddress로 nonce 발급 |
 | 인증 | `POST /auth/wallet/verify` | nonce 서명 검증 후 JWT 반환 |
 | QR | `POST /issue` | brand/product/purchaseAt/ownerWallet 입력 → short_token + QR 이미지 |
-| 검증 | `GET /verify` | short_token 복원 + signature 검증 (tokenId 조회 시 체인 ownerOf로 더블 체크) |
-| 메타데이터 | `POST /nft/metadata` | payload 검증 후 Pinata 업로드 → `{ cid, metadata }` |
-| NFT 기록 | `POST /nft/record` | 온체인 mint 후 tokenId+payload를 기록 |
-| 양도 기록 | `POST /nft/record-transfer` | transferFrom 실행 후 체인 결과를 기록 |
+| 검증 | `GET /verify` | short_token 복원 + signature 검증 (필요 시 ownerOf 조회) |
+| NFT 등록 | `POST /nft/register` | short_token 검증 → Pinata 업로드 → 서버 지갑으로 mint → tokenId/txHash 응답 |
+| 소유권 이력 | `POST /nft/record-transfer` | 사용자가 서명한 transfer 결과를 기록 |
+| 보관함 | `GET /nft/me` | 로그인한 wallet의 NFT 목록 |
 
-모든 DID는 `did:ethr:<wallet>` 형식을 강제하며, `/nft/record` 단계에서 payload와 walletAddress가 반드시 일치해야 합니다.
+모든 DID는 `did:ethr:<wallet>` 형식을 강제하며, `/nft/register`는 payload DID와 세션 wallet이 일치해야 진행됩니다.
 
 ## 개발 팁
 

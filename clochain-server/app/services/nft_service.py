@@ -4,7 +4,7 @@ from app.core.config import settings
 from app.core.did import did_to_wallet, to_did
 from app.core.hmac_utils import decode_short_token, encode_short_token, sign_payload
 from app.db import crud
-from app.services.onchain import mint_via_ethers
+from app.services.onchain import mint_via_web3
 from app.services.pinata_service import PinataService
 
 
@@ -127,7 +127,7 @@ class NFTService:
     metadata = self._build_metadata(payload, short_token)
     cid = self.pinata.upload_metadata(metadata)
     token_uri = f"ipfs://{cid}"
-    result = mint_via_ethers(normalized_wallet, token_uri)
+    result = mint_via_web3(normalized_wallet, token_uri)
     token_id = result.get("tokenId")
     if not token_id:
       raise HTTPException(status_code=500, detail="Unable to obtain tokenId from mint transaction")
