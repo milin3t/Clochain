@@ -22,6 +22,7 @@ ABI = [
   {
     "inputs": [
       {"internalType": "address", "name": "to", "type": "address"},
+      {"internalType": "bytes32", "name": "productHash", "type": "bytes32"},
       {"internalType": "string", "name": "tokenURI", "type": "string"},
     ],
     "name": "mintAuthenticityToken",
@@ -81,7 +82,7 @@ def mint_via_web3(to_address: str, token_uri: str, product_hash_source: str) -> 
 
   if "gas" not in txn:
     try:
-      txn["gas"] = contract.functions.mintAuthenticityToken(checksum_to, token_uri).estimate_gas(
+      txn["gas"] = contract.functions.mintAuthenticityToken(checksum_to, product_hash, token_uri).estimate_gas(
         {"from": server_address}
       )
     except Web3Exception:
