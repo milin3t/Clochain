@@ -11,19 +11,7 @@ const client = axios.create({
   baseURL: API_BASE_URL,
 })
 
-export async function issueProduct(
-  payload: IssueRequest,
-  accessToken: string,
-): Promise<IssueResponse> {
-  if (!accessToken) {
-    throw new Error('SESSION_REQUIRED')
-  }
-
-  const { data } = await client.post<IssueResponse>('/issue', payload, {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-  })
-
+export async function issueProduct(payload: IssueRequest): Promise<IssueResponse> {
+  const { data } = await client.post<IssueResponse>('/issue', payload)
   return data
 }

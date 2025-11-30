@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import axios from 'axios'
 import Button from '../components/Button'
@@ -12,12 +12,20 @@ const ProductPage = () => {
   const { brand: brandSlug, productId } = useParams<{ brand?: string; productId?: string }>()
   const brand = brandSlug ? findBrand(brandSlug) : undefined
   const product = brand && productId ? findProduct(brand.slug, productId) : null
-  const { walletAddress, login, sessionToken, ensureSession } = useAuth()
+  const { walletAddress, login } = useAuth()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [result, setResult] = useState<IssueResponse | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
+  const [ownerWallet, setOwnerWallet] = useState(walletAddress ?? '')
+  const [ownerWalletError, setOwnerWalletError] = useState<string | null>(null)
+
+  useEffect(() => {
+    setOwnerWallet(walletAddress ?? '')
+  }, [walletAddress])
+
+  const isOwnerWalletValid = useMemo(() => /^0x[a-fA-F0-9]{40}$/.test(ownerWallet.trim()), [ownerWallet])
 
   if (!walletAddress) {
     return (
@@ -50,25 +58,33 @@ const ProductPage = () => {
   }
 
   function handlePurchase() {
+    if (!ownerWallet || !isOwnerWalletValid) {
+      setOwnerWalletError('소유자 지갑 주소를 0x로 시작하는 42자리 형식으로 입력해주세요.')
+      return
+    }
+    setOwnerWalletError(null)
     setIsModalOpen(true)
     void issueForProduct()
   }
 
   async function issueForProduct() {
-    if (!walletAddress || !brand || !product) return
+    if (!brand || !product) return
+    if (!ownerWallet || !isOwnerWalletValid) {
+      setOwnerWalletError('유효한 지갑 주소를 입력한 뒤 다시 시도하세요.')
+      return
+    }
     setLoading(true)
     setError(null)
     setResult(null)
     setCopied(false)
     try {
-      const token = sessionToken ?? (await ensureSession())
       const response = await issueProduct(
         {
           brand: brand.slug,
           productId: product.id,
           purchaseAt: new Date().toISOString(),
+          ownerWallet: ownerWallet.trim(),
         },
-        token,
       )
       setResult(response)
     } catch (err) {
@@ -77,16 +93,8 @@ const ProductPage = () => {
           (err.response?.data as { detail?: string })?.detail ||
           'QR 발급 중 문제가 발생했습니다.'
         setError(detail)
-      } else if (err instanceof Error) {
-        if (err.message === 'WALLET_REQUIRED') {
-          setError('지갑 세션을 확인할 수 없습니다. 다시 로그인해주세요.')
-        } else if (err.message === 'SIGNING_UNAVAILABLE') {
-          setError('지갑 서명이 지원되지 않습니다. 연결을 재설정한 뒤 다시 시도해주세요.')
-        } else {
-          setError(err.message || '알 수 없는 오류로 실패했습니다.')
-        }
       } else {
-        setError('알 수 없는 오류로 실패했습니다.')
+        setError(err instanceof Error ? err.message || '알 수 없는 오류로 실패했습니다.' : '알 수 없는 오류로 실패했습니다.')
       }
     } finally {
       setLoading(false)
@@ -121,6 +129,17 @@ const ProductPage = () => {
             Self-registration ready. QR issuance will mint proof-of-origin NFT once linked to the
             CloChain server.
           </div>
+          <label className="text-xs uppercase tracking-[0.4em] text-gray-500">
+            Owner Wallet Address
+            <input
+              type="text"
+              value={ownerWallet}
+              onChange={(event) => setOwnerWallet(event.target.value)}
+              placeholder="0x1234..."
+              className="mt-2 w-full rounded-[18px] border border-ink/20 bg-white px-4 py-3 text-sm text-ink placeholder:text-gray-400 focus:border-ink focus:outline-none"
+            />
+          </label>
+          {ownerWalletError && <p className="text-xs text-red-600">{ownerWalletError}</p>}
           <Button type="button" className="w-full md:w-auto" onClick={handlePurchase}>
             PURCHASE
           </Button>
