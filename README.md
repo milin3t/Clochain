@@ -1,15 +1,15 @@
 # CloChain v2 (thirdweb + Wallet DID)
 
-CloChain은 의류 QR을 기반으로 사용자가 직접 NFT 정품 인증을 등록하고, thirdweb 지갑(DID)으로 소유권을 증명·양도·검증하는 시스템입니다. 이 리포지토리는 v2 명세(AGENTS.md)를 따르는 모노레포로, Shop/App/Server/Contracts 네 영역을 한 번에 관리합니다.
+CloChain은 의류 QR을 기반으로 사용자가 직접 NFT 정품 인증을 등록하고, thirdweb 지갑(DID)으로 소유권을 증명·양도·검증하는 시스템입니다. 이 리포지토리 모노레포로, Shop/App/Server/Contracts 네 영역을 한 번에 관리합니다.
 
 ## Monorepo 구조
 
 ```
 root/
-├─ clochain-shop/     # React(Vite) QR 발급/검증 UI (Vercel)
-├─ clochain-app/      # React(Vite, PWA) 스캔/등록/지갑/양도 (Vercel)
-├─ clochain-server/   # FastAPI 백엔드 (Railway 등)
-└─ contracts/         # Hardhat ERC-721 (Polygon Amoy)
+├─ clochain-shop/              # React(Vite) QR 발급/검증 UI (Vercel)
+├─ clochain-app/               # React(Vite, PWA) 스캔/등록/지갑/양도 (Vercel)
+├─ clochain-server/            # FastAPI 백엔드 (Railway 등)
+└─ clochain-contracts/         # Hardhat ERC-721 (Polygon Amoy)
 ```
 
 각 디렉터리의 README에 세부 개발 방법이 정리되어 있습니다.

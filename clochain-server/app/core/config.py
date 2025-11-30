@@ -18,6 +18,10 @@ class Settings:
     self.pinata_api_key = os.getenv("PINATA_API_KEY", "pinata-key")
     self.pinata_secret = os.getenv("PINATA_API_SECRET") or os.getenv("PINATA_SECRET", "pinata-secret")
     self.pinata_jwt = os.getenv("PINATA_JWT", "")
+    self.rpc_url = os.getenv("RPC_URL", "")
+    self.server_private_key = os.getenv("SERVER_PRIVATE_KEY", "")
+    self.server_wallet_address = os.getenv("SERVER_WALLET_ADDRESS", "")
+    self.contract_address = os.getenv("CONTRACT_ADDRESS", "")
 
 
 @lru_cache

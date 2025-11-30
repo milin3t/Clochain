@@ -1,0 +1,16 @@
+{
+  "name": "clochain-server",
+  "version": "1.0.0",
+  "description": "FastAPI 백엔드로 CloChain v2의 DID 로그인, QR 발급/검증, Pinata 메타데이터 생성, NFT/Transfer 기록을 담당합니다. 지갑(Web3Auth)이 트랜잭션을 직접 서명하고, 서버는 서명/검증/DB 기록만 수행한다는 AGENTS 명세를 그대로 구현합니다.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "ethers": "^6.15.0"
+  }
+}

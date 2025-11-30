@@ -39,9 +39,16 @@ def get_issue_by_token(session: Session, short_token: str) -> models.Issue | Non
   return result.scalars().first()
 
 
-def create_nft_record(session: Session, token_id: str, wallet_address: str, cid: str, payload: Dict[str, Any]):
+def create_nft_record(
+  session: Session,
+  token_id: str,
+  wallet_address: str,
+  cid: str,
+  payload: Dict[str, Any],
+  first_owner_wallet: str | None = None,
+):
   wallet = wallet_address.lower()
-  first_owner_wallet = did_to_wallet(payload["did"])
+  first_owner = (first_owner_wallet or did_to_wallet(payload["did"])).lower()
   nft = models.NFT(
     token_id=token_id,
     owner_wallet=wallet,
@@ -49,7 +56,7 @@ def create_nft_record(session: Session, token_id: str, wallet_address: str, cid:
     brand=payload["brand"],
     product_id=payload["productId"],
     purchase_at=payload["purchaseAt"],
-    first_owner_wallet=first_owner_wallet,
+    first_owner_wallet=first_owner,
     created_at=datetime.utcnow(),
   )
   session.add(nft)

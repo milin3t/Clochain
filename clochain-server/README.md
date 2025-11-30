@@ -29,6 +29,25 @@ PINATA_JWT=...          # 선택, Bearer 사용
 - `PINATA_JWT`가 있으면 Bearer 헤더로 업로드를 수행하고, 없으면 API Key/Secret 헤더를 사용합니다.
 - `PINATA_JWT`도 없고 키가 기본값이면 서버는 자동으로 mock CID 를 생성해 개발 편의성을 유지합니다.
 
+### 온체인 mint 설정
+
+```
+RPC_URL=https://polygon-amoy.g.alchemy.com/v2/<api-key>
+SERVER_PRIVATE_KEY=0x....
+SERVER_WALLET_ADDRESS=0x....
+CONTRACT_ADDRESS=0x....
+```
+
+서버는 `scripts/ethers-runner.mjs`를 통해 Node/ethers v6로 `mintAuthenticityToken`을 실행합니다.  
+따라서 FastAPI 디렉터리에서도 npm 의존성을 설치해야 하며(Railway 등 배포 환경 포함), 다음 명령을 추가로 실행하세요:
+
+```bash
+cd clochain-server
+npm install
+```
+
+Railway의 빌드 설정에는 `pip install -r requirements.txt` 뒤에 `npm install`을 추가 커맨드로 넣어 두면 됩니다.
+
 ## 로컬 실행
 
 ```bash
@@ -36,6 +55,7 @@ cd clochain-server
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+npm install
 uvicorn app.main:app --reload
 ```
 

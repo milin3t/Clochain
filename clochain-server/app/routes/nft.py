@@ -55,6 +55,19 @@ class TransferRecordResponse(BaseModel):
   txHash: str
 
 
+class RegisterRequest(BaseModel):
+  short_token: str = Field(validation_alias=AliasChoices("short_token", "shortToken"))
+
+
+class RegisterResponse(BaseModel):
+  ok: bool
+  tokenId: str
+  cid: str
+  metadata: dict
+  txHash: str | None = Field(default=None, validation_alias=AliasChoices("txHash", "tx_hash"))
+  blockNumber: int | None = Field(default=None, validation_alias=AliasChoices("blockNumber", "block_number"))
+
+
 @router.get("/me", response_model=list[NFTItemResponse])
 def my_nfts(wallet: str = Depends(get_current_wallet), session=Depends(get_session)):
   service = NFTService(session)
@@ -92,3 +105,21 @@ def record_transfer_event(
   service = NFTService(session)
   service.record_transfer(payload.tokenId, payload.fromWallet, payload.toWallet, payload.txHash, payload.blockNumber)
   return TransferRecordResponse(ok=True, txHash=payload.txHash)
+
+
+@router.post("/register", response_model=RegisterResponse)
+def register_nft(
+  payload: RegisterRequest,
+  wallet: str = Depends(get_current_wallet),
+  session=Depends(get_session),
+):
+  service = NFTService(session)
+  result = service.register_nft(payload.short_token, wallet)
+  return RegisterResponse(
+    ok=True,
+    tokenId=result["tokenId"],
+    cid=result["cid"],
+    metadata=result["metadata"],
+    txHash=result.get("txHash"),
+    blockNumber=result.get("blockNumber"),
+  )

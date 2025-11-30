@@ -4,6 +4,7 @@ from app.core.config import settings
 from app.core.did import did_to_wallet, to_did
 from app.core.hmac_utils import decode_short_token, encode_short_token, sign_payload
 from app.db import crud
+from app.services.onchain import mint_via_ethers
 from app.services.pinata_service import PinataService
 
 
@@ -33,7 +34,14 @@ class NFTService:
       raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Issued token not found for payload")
     if crud.is_payload_registered(self.session, payload):
       raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="NFT already registered for this payload")
-    crud.create_nft_record(self.session, token_id=token_id, wallet_address=normalized_wallet, cid=cid, payload=payload)
+    crud.create_nft_record(
+      self.session,
+      token_id=token_id,
+      wallet_address=normalized_wallet,
+      cid=cid,
+      payload=payload,
+      first_owner_wallet=normalized_wallet,
+    )
     return {"tokenId": token_id, "wallet": normalized_wallet, "cid": cid}
 
   def record_transfer(
@@ -100,3 +108,43 @@ class NFTService:
   def _reconstruct_short_token(self, payload: dict) -> str:
     signature = sign_payload(payload)
     return encode_short_token(payload, signature)
+
+  def register_nft(self, short_token: str, wallet_address: str):
+    normalized_wallet = wallet_address.lower()
+    payload, _ = decode_short_token(short_token)
+
+    expected_wallet = did_to_wallet(payload["did"])
+    if normalized_wallet != expected_wallet:
+      raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Wallet does not match DID")
+
+    issue = crud.get_issue_by_token(self.session, short_token)
+    if not issue:
+      raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Issue not found")
+
+    if crud.is_payload_registered(self.session, payload):
+      raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="NFT already registered for this payload")
+
+    metadata = self._build_metadata(payload, short_token)
+    cid = self.pinata.upload_metadata(metadata)
+    token_uri = f"ipfs://{cid}"
+    result = mint_via_ethers(normalized_wallet, token_uri)
+    token_id = result.get("tokenId")
+    if not token_id:
+      raise HTTPException(status_code=500, detail="Unable to obtain tokenId from mint transaction")
+
+    crud.create_nft_record(
+      self.session,
+      token_id=str(token_id),
+      wallet_address=normalized_wallet,
+      cid=cid,
+      payload=payload,
+      first_owner_wallet=normalized_wallet,
+    )
+
+    return {
+      "tokenId": str(token_id),
+      "cid": cid,
+      "metadata": metadata,
+      "txHash": result.get("txHash"),
+      "blockNumber": result.get("blockNumber"),
+    }
