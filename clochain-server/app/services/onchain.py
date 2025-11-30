@@ -4,9 +4,12 @@ from eth_account import Account
 from fastapi import HTTPException
 from web3 import Web3
 from web3.contract.contract import Contract
-from web3.exceptions import ContractLogicError, Web3Exception
-from web3._utils.events import EventLogErrorFlags
-from web3._utils.events import EventLogErrorFlags
+from web3.exceptions import ContractLogicError, MismatchedABI, Web3Exception
+
+try:  # web3.py v6.12+ exposes EventLogErrorFlags; older versions might not.
+  from web3._utils.events import EventLogErrorFlags
+except ImportError:  # pragma: no cover - defensive for future versions
+  EventLogErrorFlags = None
 
 from app.core.config import settings
 
@@ -116,14 +119,18 @@ def _to_checksum(address: str) -> str:
 
 
 def _extract_token_id(contract: Contract, receipt: dict) -> int | None:
+  error_flag = None
+  if EventLogErrorFlags is not None:
+    error_flag = getattr(EventLogErrorFlags, "DISCARD", None) or getattr(EventLogErrorFlags, "IGNORE", None)
+
   try:
-    discard_flag = getattr(EventLogErrorFlags, "DISCARD", None)
-    if discard_flag is not None:
-      events = contract.events.Transfer().process_receipt(receipt, errors=discard_flag)
+    if error_flag is not None:
+      events = contract.events.Transfer().process_receipt(receipt, errors=error_flag)
     else:
       events = contract.events.Transfer().process_receipt(receipt)
-  except Web3Exception:
+  except (Web3Exception, MismatchedABI):
     events = []
+
   if events:
     return int(events[0]["args"]["tokenId"])
   return None
