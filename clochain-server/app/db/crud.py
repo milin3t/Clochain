@@ -97,3 +97,10 @@ def record_transfer(session: Session, token_id: str, from_wallet: str, to_wallet
   session.add(transfer)
   session.commit()
   return transfer
+
+
+def list_nfts_by_owner(session: Session, wallet_address: str) -> list[models.NFT]:
+  wallet = wallet_address.lower()
+  stmt = select(models.NFT).where(models.NFT.owner_wallet == wallet)
+  result = session.execute(stmt)
+  return list(result.scalars().all())

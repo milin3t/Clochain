@@ -1,5 +1,6 @@
 import base64
 import io
+from datetime import datetime, timezone
 
 import qrcode
 
@@ -19,6 +20,7 @@ class IssueService:
       "purchaseAt": request_data["purchaseAt"],
       "did": to_did(wallet),
       "nonce": random_nonce(),
+      "issuedAt": datetime.now(timezone.utc).isoformat(),
     }
     signature = sign_payload(payload)
     short_token = encode_short_token(payload, signature)

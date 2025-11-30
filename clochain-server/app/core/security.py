@@ -34,8 +34,24 @@ def decode_token(token: str) -> Dict[str, Any]:
 
 
 def get_current_wallet(credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)) -> str:
-  claims = decode_token(credentials.credentials)
-  wallet = claims.get("wallet")
-  if not wallet:
-    raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="wallet missing in token")
-  return wallet.lower()
+  token = credentials.credentials
+  try:
+    claims = decode_token(token)
+  except HTTPException:
+    claims = None
+  except JWTError:
+    claims = None
+
+  if claims:
+    wallet = claims.get("wallet")
+    if wallet:
+      return wallet.lower()
+
+  # Fall back to accepting direct wallet strings (for embedded-wallet clients that transmit raw addresses).
+  lowered = token.lower()
+  if lowered.startswith("0x") and len(lowered) == 42:
+    # Validate wallet address shape by converting to DID (raises if invalid)
+    to_did(lowered)
+    return lowered
+
+  raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized wallet token")
