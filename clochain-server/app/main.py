@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import auth, issue
+from app.api.routes import auth, issue, verify
 from app.core.config import settings
 
 
@@ -22,6 +22,7 @@ def create_app() -> FastAPI:
 
   app.include_router(auth.router, prefix="/auth", tags=["auth"])
   app.include_router(issue.router, tags=["issue"])
+  app.include_router(verify.router, tags=["verify"])
 
   @app.get("/ping")
   async def ping():

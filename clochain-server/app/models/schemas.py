@@ -35,3 +35,14 @@ class IssueResponse(BaseModel):
   qr_base64: str = Field(..., alias="qr_base64")
 
   model_config = {"populate_by_name": True}
+
+
+class VerifyRequest(BaseModel):
+  short_token: str
+
+
+class VerifyResponse(BaseModel):
+  is_valid: bool
+  payload: IssuePayload | None
+  message: str
+  stale: bool = False

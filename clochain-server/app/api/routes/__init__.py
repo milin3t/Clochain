@@ -1,3 +1,3 @@
-from . import auth, issue
+from . import auth, issue, verify
 
-__all__ = ["auth", "issue"]
+__all__ = ["auth", "issue", "verify"]
