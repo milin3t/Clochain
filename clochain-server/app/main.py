@@ -1,12 +1,15 @@
-import os
+from logging.config import dictConfig
 
-from app.api.routes import auth, issue, verify
-from app.core.config import settings
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.routes import auth, issue, verify
+from app.core.config import settings
+from app.core.logging_config import LOGGING_CONFIG
+
 
 def create_app() -> FastAPI:
+  dictConfig(LOGGING_CONFIG)
   app = FastAPI(
     title=settings.app_name,
     version="0.1.0",
@@ -25,12 +28,6 @@ def create_app() -> FastAPI:
   app.include_router(issue.router, tags=["issue"])
   app.include_router(verify.router, tags=["verify"])
 
-  @app.get("/debug")
-  def debug():
-      return {
-          "cwd": os.getcwd(),
-          "files": os.listdir(".")
-      }
   @app.get("/ping")
   async def ping():
     return {"pong": True}
