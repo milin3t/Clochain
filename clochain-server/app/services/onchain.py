@@ -5,6 +5,8 @@ from fastapi import HTTPException
 from web3 import Web3
 from web3.contract.contract import Contract
 from web3.exceptions import ContractLogicError, Web3Exception
+from web3._utils.events import EventLogErrorFlags
+from web3._utils.events import EventLogErrorFlags
 
 from app.core.config import settings
 
@@ -115,7 +117,9 @@ def _to_checksum(address: str) -> str:
 
 def _extract_token_id(contract: Contract, receipt: dict) -> int | None:
   try:
-    events = contract.events.Transfer().process_receipt(receipt)
+    events = contract.events.Transfer().process_receipt(
+      receipt, errors=EventLogErrorFlags.DISCARD
+    )
   except Web3Exception:
     events = []
   if events:
