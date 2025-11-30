@@ -1,0 +1,25 @@
+{
+  "name": "clochain-contracts",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Hardhat workspace for the CloChain authenticity NFT on Polygon Amoy.",
+  "scripts": {
+    "clean": "hardhat clean",
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy": "hardhat run scripts/deploy.ts --network polygonAmoy",
+    "lint": "solhint \"contracts/**/*.sol\""
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.0.2",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "@types/node": "^20.12.7",
+    "hardhat": "^2.22.2",
+    "solhint": "^3.6.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.5"
+  }
+}
