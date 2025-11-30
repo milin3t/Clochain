@@ -127,7 +127,8 @@ class NFTService:
     metadata = self._build_metadata(payload, short_token)
     cid = self.pinata.upload_metadata(metadata)
     token_uri = f"ipfs://{cid}"
-    result = mint_via_web3(normalized_wallet, token_uri)
+    product_hash_source = self._build_product_hash_source(payload, normalized_wallet)
+    result = mint_via_web3(normalized_wallet, token_uri, product_hash_source)
     token_id = result.get("tokenId")
     if not token_id:
       raise HTTPException(status_code=500, detail="Unable to obtain tokenId from mint transaction")
@@ -148,3 +149,14 @@ class NFTService:
       "txHash": result.get("txHash"),
       "blockNumber": result.get("blockNumber"),
     }
+
+  def _build_product_hash_source(self, payload: dict, wallet_address: str) -> str:
+    return "|".join(
+      [
+        payload["brand"],
+        payload["productId"],
+        payload["purchaseAt"],
+        wallet_address,
+        payload.get("nonce", ""),
+      ]
+    )

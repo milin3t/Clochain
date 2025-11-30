@@ -61,14 +61,17 @@ def _init_web3() -> tuple[Web3, Contract, str]:
   return w3, contract, account.address
 
 
-def mint_via_web3(to_address: str, token_uri: str) -> dict:
+def mint_via_web3(to_address: str, token_uri: str, product_hash_source: str) -> dict:
   if not token_uri:
     raise HTTPException(status_code=400, detail="tokenURI is required")
+  if not product_hash_source:
+    raise HTTPException(status_code=400, detail="product hash source is required")
 
   w3, contract, server_address = _init_web3()
   checksum_to = _to_checksum(to_address)
+  product_hash = Web3.keccak(text=product_hash_source)
 
-  txn = contract.functions.mintAuthenticityToken(checksum_to, token_uri).build_transaction(
+  txn = contract.functions.mintAuthenticityToken(checksum_to, product_hash, token_uri).build_transaction(
     {
       "from": server_address,
       "nonce": w3.eth.get_transaction_count(server_address),
