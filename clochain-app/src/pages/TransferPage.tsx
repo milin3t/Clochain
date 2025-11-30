@@ -1,12 +1,21 @@
 import { type FormEvent, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import Header from '../components/Header'
-import { transferNFT } from '../api/nft'
+import { recordNFTTransfer } from '../api/nft'
+import { transferAuthenticityNFT } from '../lib/nftActions'
 import { useAuth } from '../context/AuthContext'
+
+const normalizeWalletInput = (value: string) => {
+  const trimmed = value.trim()
+  if (trimmed.startsWith('did:ethr:')) {
+    return trimmed.slice('did:ethr:'.length).toLowerCase()
+  }
+  return trimmed.toLowerCase()
+}
 
 const TransferPage = () => {
   const { tokenId = '' } = useParams()
-  const { walletAddress } = useAuth()
+  const { walletAddress, ensureSession } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const [recipient, setRecipient] = useState('')
@@ -23,10 +32,30 @@ const TransferPage = () => {
       setMessage('받는 지갑 주소 또는 이메일을 입력하세요.')
       return
     }
+    const normalized = normalizeWalletInput(recipient)
+    if (!/^0x[a-fA-F0-9]{40}$/.test(normalized)) {
+      setStatus('error')
+      setMessage('0x로 시작하는 지갑 주소 또는 did:ethr: 형식만 지원합니다.')
+      return
+    }
     setStatus('pending')
     setMessage('소유권 이전을 진행합니다...')
     try {
-      await transferNFT(tokenId, recipient, walletAddress)
+      const sessionToken = await ensureSession()
+      const { txHash } = await transferAuthenticityNFT({
+        tokenId,
+        fromWallet: walletAddress,
+        toWallet: normalized,
+      })
+      await recordNFTTransfer(
+        {
+          tokenId,
+          fromWallet: walletAddress,
+          toWallet: normalized,
+          txHash,
+        },
+        sessionToken,
+      )
       setStatus('success')
       setMessage('이전 요청을 완료했습니다. 블록체인 트랜잭션을 확인하세요.')
       setRecipient('')
@@ -39,27 +68,27 @@ const TransferPage = () => {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#f7f7f7]">
+    <div className="flex min-h-screen flex-col bg-[#020617] text-slate-50">
       <Header title="소유권 이전" />
       <main className="flex-1 px-4 py-6">
-        <section className="rounded-3xl bg-white p-6 shadow-sm">
-          <p className="text-sm font-semibold text-black/50">이전할 NFT</p>
-          <p className="mt-1 text-xl font-semibold text-[#111]">{label}</p>
+        <section className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-[0_25px_60px_rgba(0,0,0,0.45)] backdrop-blur">
+          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-400">이전할 NFT</p>
+          <p className="mt-1 text-xl font-semibold text-white">{label}</p>
           <form className="mt-6 flex flex-col gap-4" onSubmit={handleSubmit}>
-            <label className="text-sm font-medium text-black/60">
+            <label className="text-sm font-medium text-slate-300">
               받는 지갑 주소 또는 이메일(추후 DID)
               <input
                 type="text"
                 value={recipient}
                 onChange={(event) => setRecipient(event.target.value)}
                 placeholder="0x... 또는 user@example.com"
-                className="mt-2 w-full rounded-2xl border border-black/10 bg-[#f7f7f7] px-4 py-3 text-base text-[#111] focus:outline-none focus:ring-2 focus:ring-black/20"
+                className="mt-2 w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-base text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-white/40"
               />
             </label>
             <button
               type="submit"
               disabled={status === 'pending'}
-              className="rounded-2xl bg-[#111] py-4 text-base font-semibold text-white disabled:opacity-60"
+              className="rounded-2xl bg-gradient-to-r from-purple-500 to-blue-500 py-4 text-base font-semibold text-white shadow-lg shadow-purple-500/25 disabled:opacity-60"
             >
               {status === 'pending' ? '이전 중...' : '이전하기'}
             </button>
@@ -67,7 +96,11 @@ const TransferPage = () => {
           {status !== 'idle' && (
             <p
               className={`mt-4 text-sm ${
-                status === 'success' ? 'text-green-600' : status === 'error' ? 'text-red-600' : 'text-black/60'
+                status === 'success'
+                  ? 'text-emerald-300'
+                  : status === 'error'
+                    ? 'text-rose-300'
+                    : 'text-slate-300'
               }`}
             >
               {message}

@@ -2,7 +2,7 @@ import { AppRouter } from './router'
 
 function App() {
   return (
-    <div className="min-h-screen bg-[#f7f7f7] text-[#111]">
+    <div className="min-h-screen bg-[#020617] text-slate-50 antialiased">
       <AppRouter />
     </div>
   )

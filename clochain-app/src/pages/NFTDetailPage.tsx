@@ -10,7 +10,7 @@ const NFTDetailPage = () => {
   const { tokenId = '' } = useParams()
   const navigate = useNavigate()
   const location = useLocation()
-  const { walletAddress } = useAuth()
+  const { walletAddress, ensureSession } = useAuth()
   const passedNft = (location.state as { nft?: NFTItem } | undefined)?.nft
   const [nft, setNft] = useState<NFTItem | null>(passedNft ?? null)
   const [metadata, setMetadata] = useState<NFTMetadata | null>(null)
@@ -23,7 +23,8 @@ const NFTDetailPage = () => {
     const load = async () => {
       setLoading(true)
       try {
-        const data = await fetchMyNFTs(walletAddress)
+        const sessionToken = await ensureSession()
+        const data = await fetchMyNFTs(sessionToken)
         if (!mounted) return
         const found = data.find((item) => item.tokenId === tokenId)
         if (found) {
@@ -39,7 +40,7 @@ const NFTDetailPage = () => {
     return () => {
       mounted = false
     }
-  }, [nft, tokenId, walletAddress])
+  }, [ensureSession, nft, tokenId, walletAddress])
 
   useEffect(() => {
     if (!nft?.tokenURI) return
@@ -78,35 +79,35 @@ const NFTDetailPage = () => {
   const name = useMemo(() => metadata?.name ?? `${nft?.brand ?? ''} ${nft?.productId ?? ''}`.trim(), [metadata?.name, nft?.brand, nft?.productId])
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#f7f7f7]">
+    <div className="flex min-h-screen flex-col bg-[#020617] text-slate-50">
       <Header title="NFT 상세" />
       <main className="flex-1 px-4 py-6">
-        <section className="rounded-3xl bg-white p-6 shadow-sm">
-          <p className="text-sm font-semibold text-black/60">#{tokenId}</p>
-          <h1 className="mt-2 text-2xl font-semibold">{name || '로딩 중...'}</h1>
+        <section className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-[0_25px_60px_rgba(0,0,0,0.45)] backdrop-blur">
+          <p className="text-sm font-semibold text-slate-400">#{tokenId}</p>
+          <h1 className="mt-2 text-2xl font-semibold text-white">{name || '로딩 중...'}</h1>
           <div className="mt-6 flex flex-col items-center justify-center gap-4">
             {qrImage ? (
-              <img src={qrImage} alt="NFT QR" className="h-64 w-64 rounded-2xl border border-black/5 bg-white p-4" />
+              <img src={qrImage} alt="NFT QR" className="h-64 w-64 rounded-2xl border border-white/10 bg-white/10 p-4" />
             ) : (
-              <div className="flex h-64 w-64 items-center justify-center rounded-2xl border border-dashed border-black/20 text-sm text-black/50">
+              <div className="flex h-64 w-64 items-center justify-center rounded-2xl border border-dashed border-white/20 text-sm text-slate-300">
                 QR 생성 중...
               </div>
             )}
-            <p className="text-center text-sm text-black/60">
+            <p className="text-center text-sm text-slate-300">
               이 제품은 블록체인 전자증명으로 인증된 정품입니다.
             </p>
           </div>
-          <div className="mt-8 flex flex-col gap-1 rounded-2xl bg-[#f7f7f7] p-4 text-sm text-black/60">
+          <div className="mt-8 flex flex-col gap-2 rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-slate-200">
             <p>브랜드: {nft?.brand ?? '알 수 없음'}</p>
             <p>제품코드: {nft?.productId ?? '-'}</p>
-            <p>tokenURI: {nft?.tokenURI ?? '-'}</p>
+            <p className="break-all text-xs text-slate-400">tokenURI: {nft?.tokenURI ?? '-'}</p>
           </div>
         </section>
         <button
           type="button"
           onClick={() => navigate(`/transfer/${tokenId}`, { state: { nft, metadata } })}
           disabled={loading}
-          className="mt-6 w-full rounded-2xl border border-black/10 bg-white py-4 text-center text-sm font-semibold text-[#111] disabled:opacity-50"
+          className="mt-6 w-full rounded-2xl bg-gradient-to-r from-violet-500 to-fuchsia-500 py-4 text-center text-sm font-semibold text-white shadow-lg shadow-fuchsia-500/30 disabled:opacity-50"
         >
           소유권 이전하기
         </button>

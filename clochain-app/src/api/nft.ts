@@ -10,6 +10,10 @@ const client = axios.create({
   baseURL: API_BASE_URL,
 })
 
+const authHeader = (sessionToken: string) => ({
+  Authorization: `Bearer ${sessionToken}`,
+})
+
 export interface NFTItem {
   tokenId: string
   brand: string
@@ -17,43 +21,69 @@ export interface NFTItem {
   tokenURI?: string
 }
 
-export interface RegisterNFTResponse {
-  tokenId?: string
-  cid?: string
-  message?: string
-  ok?: boolean
+export interface MetadataResponse {
+  cid: string
+  metadata: Record<string, unknown>
+  payload: Record<string, unknown>
 }
 
-export interface TransferResponse {
-  txHash?: string
-  ok?: boolean
+export interface RecordResponse {
+  ok: boolean
+  tokenId: string
+  walletAddress: string
+  cid: string
 }
 
-const authHeader = (walletAddress: string) => ({
-  Authorization: `Bearer ${walletAddress}`,
-})
-
-export async function registerNFT(shortToken: string, walletAddress: string) {
-  const { data } = await client.post<RegisterNFTResponse>(
-    '/nft/register',
-    { q: shortToken },
-    { headers: authHeader(walletAddress) },
-  )
-  return data
+export interface TransferRecordResponse {
+  ok: boolean
+  txHash: string
 }
 
-export async function fetchMyNFTs(walletAddress: string) {
-  const { data } = await client.get<NFTItem[]>('/nft/me', {
-    headers: authHeader(walletAddress),
+export async function buildNFTMetadata(shortToken: string) {
+  const { data } = await client.post<MetadataResponse>('/nft/metadata', {
+    short_token: shortToken,
   })
   return data
 }
 
-export async function transferNFT(tokenId: string, to: string, walletAddress: string) {
-  const { data } = await client.post<TransferResponse>(
-    '/nft/transfer',
-    { tokenId, to },
-    { headers: authHeader(walletAddress) },
+export async function recordNFTMint(
+  payload: {
+    tokenId: string
+    walletAddress: string
+    cid: string
+    payload: Record<string, unknown>
+  },
+  sessionToken: string,
+) {
+  const { data } = await client.post<RecordResponse>(
+    '/nft/record',
+    payload,
+    { headers: authHeader(sessionToken) },
   )
+  return data
+}
+
+export async function recordNFTTransfer(
+  payload: {
+    tokenId: string
+    fromWallet: string
+    toWallet: string
+    txHash: string
+    blockNumber?: number | null
+  },
+  sessionToken: string,
+) {
+  const { data } = await client.post<TransferRecordResponse>(
+    '/nft/record-transfer',
+    payload,
+    { headers: authHeader(sessionToken) },
+  )
+  return data
+}
+
+export async function fetchMyNFTs(sessionToken: string) {
+  const { data } = await client.get<NFTItem[]>('/nft/me', {
+    headers: authHeader(sessionToken),
+  })
   return data
 }

@@ -12,10 +12,18 @@
     sans-serif;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+  color-scheme: dark;
 }
 
 body {
   margin: 0;
   min-height: 100vh;
-  background-color: #f7f7f7;
+  background: radial-gradient(circle at 20% 20%, rgba(76, 130, 255, 0.16), transparent 45%),
+    radial-gradient(circle at 80% 0%, rgba(255, 109, 191, 0.18), transparent 40%),
+    #020617;
+  color: #f8fafc;
+}
+
+* {
+  outline-color: #94a3b8;
 }

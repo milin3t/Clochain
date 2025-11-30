@@ -2,7 +2,8 @@ import { Scanner, type IDetectedBarcode } from '@yudiel/react-qr-scanner'
 import { useCallback, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Header from '../components/Header'
-import { registerNFT } from '../api/nft'
+import { buildNFTMetadata, recordNFTMint } from '../api/nft'
+import { mintAuthenticityNFT } from '../lib/nftActions'
 import { useAuth } from '../context/AuthContext'
 
 const extractShortToken = (value: string) => {
@@ -20,7 +21,7 @@ const extractShortToken = (value: string) => {
 }
 
 const ScanPage = () => {
-  const { walletAddress } = useAuth()
+  const { walletAddress, ensureSession } = useAuth()
   const navigate = useNavigate()
   const [status, setStatus] = useState<'idle' | 'pending' | 'success' | 'error'>('idle')
   const [message, setMessage] = useState('')
@@ -37,9 +38,24 @@ const ScanPage = () => {
       setStatus('pending')
       setMessage('QR 정보를 확인하는 중입니다...')
       try {
-        await registerNFT(token, walletAddress)
+        const sessionToken = await ensureSession()
+        const metadataResponse = await buildNFTMetadata(token)
+        const { tokenId, txHash } = await mintAuthenticityNFT({
+          cid: metadataResponse.cid,
+          metadata: metadataResponse.metadata,
+          payload: metadataResponse.payload,
+        })
+        await recordNFTMint(
+          {
+            tokenId,
+            walletAddress,
+            cid: metadataResponse.cid,
+            payload: metadataResponse.payload,
+          },
+          sessionToken,
+        )
         setStatus('success')
-        setMessage('NFT 등록이 완료되었습니다! 내 옷장에서 확인하세요.')
+        setMessage(`NFT 등록이 완료되었습니다! 트랜잭션: ${txHash.slice(0, 10)}...`)
         setTimeout(() => {
           navigate('/wardrobe')
         }, 1200)
@@ -51,23 +67,37 @@ const ScanPage = () => {
         processingRef.current = false
       }
     },
-    [navigate, walletAddress],
+    [ensureSession, navigate, walletAddress],
   )
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#f7f7f7]">
+    <div className="flex min-h-screen flex-col bg-[#020617] text-slate-50">
       <Header title="QR 스캔" />
       <main className="flex flex-1 flex-col gap-6 px-4 py-6">
-        <section className="rounded-3xl bg-white p-5 shadow-sm">
-          <p className="text-lg font-semibold">정품 QR 코드를 스캔하세요</p>
-          <p className="mt-2 text-sm text-black/60">카메라 접근을 허용하면 자동으로 short_token이 추출되어 NFT가 등록됩니다.</p>
-          <div className="mt-4 overflow-hidden rounded-2xl border border-black/10">
-            <Scanner onScan={handleScan} onError={(error) => console.error('Scanner error', error)} />
+        <section className="rounded-3xl border border-white/10 bg-white/5 p-5 shadow-[0_25px_60px_rgba(0,0,0,0.45)] backdrop-blur">
+          <p className="text-lg font-semibold text-white">정품 QR 코드를 스캔하세요</p>
+          <p className="mt-2 text-sm text-slate-300">
+            카메라 접근을 허용하면 short_token이 추출되고 즉시 NFT 등록 프로세스가 실행됩니다.
+          </p>
+          <div className="mt-5 flex justify-center">
+            <div className="w-full max-w-md overflow-hidden rounded-3xl border border-white/10 bg-black/40">
+              <Scanner
+                onScan={handleScan}
+                onError={(error) => console.error('Scanner error', error)}
+                styles={{
+                  container: { width: '100%', height: '360px' },
+                }}
+              />
+            </div>
           </div>
           {status !== 'idle' && (
             <p
               className={`mt-4 text-sm font-medium ${
-                status === 'success' ? 'text-green-600' : status === 'error' ? 'text-red-600' : 'text-black/60'
+                status === 'success'
+                  ? 'text-emerald-300'
+                  : status === 'error'
+                    ? 'text-rose-300'
+                    : 'text-slate-300'
               }`}
             >
               {message}
