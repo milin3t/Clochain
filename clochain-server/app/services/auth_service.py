@@ -5,7 +5,7 @@ from eth_account import Account
 from eth_account.messages import encode_defunct
 from fastapi import HTTPException, status
 
-from app.core.security import create_wallet_token
+from app.core.security import create_wallet_token, decode_token
 from app.db import crud
 
 
@@ -39,5 +39,10 @@ class AuthService:
       raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Signature mismatch")
 
     token = create_wallet_token(wallet)
+    claims = decode_token(token)
+    exp_ts = claims.get("exp")
+    if isinstance(exp_ts, (int, float)):
+      expires_at = datetime.fromtimestamp(exp_ts, tz=timezone.utc)
+      crud.store_session(self.session, token, wallet, expires_at)
     del self._nonce_store[wallet]
     return token

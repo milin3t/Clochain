@@ -17,8 +17,6 @@ class Settings:
     self.database_url = os.getenv("DATABASE_URL", "sqlite:///./clochain.db")
     self.pinata_api_key = os.getenv("PINATA_API_KEY", "pinata-key")
     self.pinata_secret = os.getenv("PINATA_SECRET", "pinata-secret")
-    self.owner_private_key = os.getenv("OWNER_PRIVATE_KEY", "0xowner")
-    self.polygon_rpc_url = os.getenv("POLYGON_RPC_URL", "https://rpc-amoy.polygon.technology")
 
 
 @lru_cache

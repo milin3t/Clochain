@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 
-from app.core.security import get_current_wallet
 from app.db.session import get_session
 from app.services.issue_service import IssueService
 
@@ -12,12 +11,13 @@ class IssueRequest(BaseModel):
   brand: str
   productId: str = Field(alias="productId")
   purchaseAt: str = Field(alias="purchaseAt")
+  ownerWallet: str = Field(alias="ownerWallet")
 
   model_config = {"populate_by_name": True}
 
 
 @router.post("/issue")
-def issue_qr(payload: IssueRequest, wallet: str = Depends(get_current_wallet), session=Depends(get_session)):
+def issue_qr(payload: IssueRequest, session=Depends(get_session)):
   service = IssueService(session)
-  response = service.issue(wallet, payload.model_dump(by_alias=True))
+  response = service.issue(payload.model_dump(by_alias=True))
   return response

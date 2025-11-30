@@ -13,18 +13,19 @@ class IssueService:
   def __init__(self, session):
     self.session = session
 
-  def issue(self, wallet: str, request_data: dict) -> dict:
+  def issue(self, request_data: dict) -> dict:
+    owner_wallet = request_data["ownerWallet"]
     payload = {
       "brand": request_data["brand"],
       "productId": request_data["productId"],
       "purchaseAt": request_data["purchaseAt"],
-      "did": to_did(wallet),
+      "did": to_did(owner_wallet),
       "nonce": random_nonce(),
       "issuedAt": datetime.now(timezone.utc).isoformat(),
     }
     signature = sign_payload(payload)
     short_token = encode_short_token(payload, signature)
-    crud.create_issue(self.session, short_token, payload, signature, wallet)
+    crud.create_issue(self.session, short_token, payload, signature)
     qr_base64 = self._build_qr(short_token)
     return {
       "short_token": short_token,
@@ -35,7 +36,8 @@ class IssueService:
 
   def _build_qr(self, short_token: str) -> str:
     qr = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_M)
-    qr.add_data(short_token)
+    verify_url = f"https://clochain-shop.vercel.app/shop/verify?q={short_token}"
+    qr.add_data(verify_url)
     qr.make(fit=True)
     img = qr.make_image(fill_color="black", back_color="white")
     buffer = io.BytesIO()
