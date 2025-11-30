@@ -12,7 +12,7 @@
 - `/shop/verify`  
   - URL 쿼리에 포함된 `q` 또는 직접 입력한 short_token으로 `GET /verify` 호출  
   - payload(brand, productId, purchaseAt, did)와 서버 signature 검증 결과를 UI에 표시  
-  - 온체인 tokenId가 있으면 owner wallet도 표시 (App이 mint 후 `/nft/record`를 완료한 경우)
+  - `/nft/register`가 완료되어 tokenId가 있을 경우 owner wallet·metadata 링크도 함께 노출
 
 ## 개발/빌드
 

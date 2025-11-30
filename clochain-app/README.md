@@ -1,26 +1,20 @@
 # CloChain App (PWA)
 
-QR 스캔 → Wallet DID 인증 → NFT 등록/양도를 담당하는 Vite 기반 PWA입니다. thirdweb 지갑이 직접 트랜잭션을 서명해야 한다는 CloChain v2 명세를 충실히 따르며, 아래 사용자 시나리오가 그대로 구현 대상입니다.
+QR 스캔 → Wallet DID 인증 → NFT 등록/양도를 담당하는 Vite 기반 PWA입니다. thirdweb in-app wallet로 로그인해 DID를 만들고, 서버 `/nft/register`에 short_token을 보내면 서버 지갑이 mint를 대행합니다. 사용자는 트랜잭션 내역을 확인하고, 소유권 이전 시에만 직접 `transferFrom`을 서명합니다.
 
 ## 핵심 플로우
 
 1. **thirdweb 로그인**  
    `/scan` 또는 `/wallet` 진입 시 ThirdWeb로 로그인하고, 앱은 `walletAddress`와 `did:ethr:<wallet>`를 확보합니다.
 
-2. **QR 스캔 & 검증**  
-   `/scan`에서 의류 QR을 스캔 → short_token을 추출 → `GET /verify?q=<short>`로 payload와 서버 서명을 확인합니다.
+2. **QR 스캔 & `/nft/register`**  
+   `/scan`에서 QR을 읽어 short_token을 추출 → `ensureSession()`으로 JWT 확보 → `POST /nft/register` 호출. 서버는 short_token을 검증하고 Pinata에 metadata를 업로드한 뒤 서버 지갑으로 `mintAuthenticityToken(to = userWallet)`을 실행합니다. 응답에는 `tokenId`, `cid`, `metadata`, `txHash`가 포함됩니다.
 
-3. **메타데이터 발급**  
-   payload가 유효하면 `POST /nft/metadata`에 `{ short_token }`을 보냅니다. 서버가 Pinata에 metadata JSON을 올리고 `cid`를 돌려줍니다.
+3. **지갑 / 워드로브 갱신**  
+   `/nft/register` 응답을 받은 뒤 앱은 로컬 워드로브를 새로고침해 소유 NFT를 보여줍니다. 별도 `/nft/record` 호출이 필요 없으며, 서버가 자동으로 DB에 기록합니다.
 
-4. **지갑으로 직접 mint**  
-   앱이 thirdweb 지갑 트랜잭션 창을 띄우고, 사용자가 `mint(to = myWallet, tokenURI = ipfs://cid)` 트랜잭션을 직접 서명/전송합니다. **이 단계가 끝나야 체인에 NFT가 실제로 생성됩니다.**
-
-5. **`/nft/record` 호출**  
-   트랜잭션이 확정되어 tokenId가 나오면, 앱이 즉시 `POST /nft/record`에 `{ tokenId, walletAddress, cid, payload }`를 전송해 CloChain 서버 DB에 등록 기록을 남깁니다. 이 과정을 거쳐야 `/verify`·`/wallet`에서 정식 소유 NFT로 인식됩니다.
-
-6. **소유권 이전**  
-   `/transfer/:tokenId`에서 `transferFrom(myWallet, to, tokenId)`를 thirdweb 지갑으로 서명하고, 끝난 뒤 `/nft/record-transfer`에 `{ tokenId, from, to, txHash }`를 제출해 DB에 이력을 추가합니다.
+4. **소유권 이전**  
+   `/transfer/:tokenId`에서 thirdweb signer로 `transferFrom(myWallet, to, tokenId)`을 직접 서명/전송합니다. 완료 후 `/nft/record-transfer` API에 `{ tokenId, fromWallet, toWallet, txHash }`를 보내 DB에 이력을 남깁니다.
 
 ## 개발/빌드
 
@@ -48,8 +42,8 @@ VITE_CONTRACT_ADDRESS=<CloChainAuthenticity contract on Polygon Amoy>
 
 ## 자주 묻는 질문
 
-- **“버튼만 누르면 NFT가 생성되나요?”**  
-  아니요. 지갑 트랜잭션 팝업에서 사용자가 서명/전송해야만 mint가 실행됩니다.
+- **“이제 사용자 지갑이 mint를 안 해도 되나요?”**  
+  `/nft/register`는 서버 지갑이 mint를 대신 수행합니다. 사용자는 QR 스캔 → API 호출만 하면 되고, 체인 내역은 tx hash로 확인하면 됩니다. 단, 소유권 이전은 여전히 사용자가 직접 서명해야 합니다.
 
-- **“mint 없이 `/nft/record`만 호출하면 어떻게 되나요?”**  
-  서버가 DID와 payload를 검사하지만, 온체인 tokenId가 없으면 진짜 NFT가 존재하지 않습니다. 반드시 3–5 단계 전체를 수행해야 합니다.
+- **“세션 없이 `/nft/register`만 호출하면 되나요?”**  
+  JWT가 없으면 서버가 DID를 확인할 수 없어 401/403을 돌려줍니다. 반드시 앱에서 thirdweb 세션을 갱신한 뒤 호출해야 합니다.

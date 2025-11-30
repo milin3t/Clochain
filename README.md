@@ -23,7 +23,7 @@ root/
    브랜드 스태프가 `/shop/:brand/issue`에서 brand/productId/purchaseAt/ownerWallet을 입력 → 서버 `POST /issue` 호출 → payload + signature + short_token + QR 이미지 확보. 이 short_token이 고객에게 전달됩니다.
 
 3. **QR 스캔 & NFT 등록 (App)**  
-   고객이 QR을 스캔하여 short_token을 얻고 `/verify`로 payload 진위를 확인 → `POST /nft/metadata`로 Pinata에 metadata 업로드 → CID를 받으면 thirdweb 지갑이 `mint(to, ipfs://cid)`를 직접 서명/전송 → 체인에서 tokenId가 생성되면 바로 `POST /nft/record`로 서버 DB에 등록.
+   고객이 QR을 스캔하여 short_token을 server `POST /nft/register`로 전달 → 서버가 payload 검증 후 Pinata에 metadata 업로드 → 서버 지갑이 `mintAuthenticityToken(userWallet, tokenURI)`를 실행 → tokenId/txHash가 응답으로 돌아와 워드로브가 갱신됩니다.
 
 4. **소유권 검증**  
    누구든 `/shop/verify` 혹은 서버 `GET /verify`로 short_token을 검증하고, 서버는 payload + signature 확인 후 Polygon `ownerOf(tokenId)`를 조회해 현재 소유자와 metadata 정보를 보여줍니다.
@@ -52,8 +52,8 @@ root/
 
 필수 환경 변수:
 
-- `clochain-server`: `JWT_SECRET`, `HMAC_SECRET`, `DATABASE_URL`, `PINATA_API_KEY`/`PINATA_API_SECRET` 또는 `PINATA_JWT`
-- `clochain-app`: `VITE_CLOCHAIN_API_URL`, `VITE_TW_CLIENT_ID`
+- `clochain-server`: `JWT_SECRET`, `HMAC_SECRET`, `DATABASE_URL`, `PINATA_API_KEY`/`PINATA_API_SECRET` 또는 `PINATA_JWT`, `RPC_URL`, `SERVER_PRIVATE_KEY`, `SERVER_WALLET_ADDRESS`, `CONTRACT_ADDRESS`
+- `clochain-app`: `VITE_CLOCHAIN_API_URL`, `VITE_TW_CLIENT_ID`, `VITE_CONTRACT_ADDRESS`
 - `clochain-shop`: `VITE_CLOCHAIN_API_URL`, `VITE_TW_CLIENT_ID`
 - `contracts`: `POLYGON_AMOY_RPC_URL`, `PRIVATE_KEY`, `POLYGONSCAN_API_KEY`(선택)
 
