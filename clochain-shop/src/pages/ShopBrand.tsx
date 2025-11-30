@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useLocation, useNavigate, useParams, Link } from 'react-router-dom'
 import { shortenAddress } from '../api/auth'
-import { useAuth } from '../auth/useAuth'
+import { useAuth } from '../context/AuthContext'
 import ProductCard from '../components/ProductCard'
 import Button from '../components/Button'
 import { findBrand } from '../data/brands'
@@ -48,10 +48,10 @@ const ShopBrand = () => {
         <p className="text-xs uppercase tracking-[0.5em] text-gray-500">Maison Collection</p>
         <h2 className="text-4xl tracking-[0.4em]">{brand.name}</h2>
         <p className="mx-auto max-w-2xl text-sm text-gray-600">{brand.narrative}</p>
+        <p className="text-xs uppercase tracking-[0.4em] text-gray-500">
+          상품 상세의 PURCHASE 버튼에서 즉시 QR을 발급할 수 있습니다.
+        </p>
         <div className="flex flex-wrap justify-center gap-3">
-          <Button as={Link} to={`/shop/${brand.slug}/issue`}>
-            정품 QR 발급하기
-          </Button>
           <Button as={Link} to="/shop/verify" variant="muted">
             정품 인증 검증하기
           </Button>

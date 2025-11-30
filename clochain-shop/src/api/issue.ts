@@ -12,12 +12,24 @@ const client = axios.create({
   baseURL: API_BASE_URL,
 })
 
-export async function issueProduct(payload: IssueRequest): Promise<IssueResponse> {
-  if (!payload.ownerWallet) {
+export async function issueProduct(
+  payload: IssueRequest,
+  walletAddress: string,
+): Promise<IssueResponse> {
+  if (!walletAddress) {
     throw new Error('WALLET_REQUIRED')
   }
 
-  const { data } = await client.post<IssueResponse>('/issue', payload)
+  const body: IssueRequest = {
+    ...payload,
+    ownerWallet: walletAddress,
+  }
+
+  const { data } = await client.post<IssueResponse>('/issue', body, {
+    headers: {
+      Authorization: `Bearer ${walletAddress}`,
+    },
+  })
 
   return data
 }

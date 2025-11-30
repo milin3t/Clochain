@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { shortenAddress } from '../api/auth'
-import { useAuth } from '../auth/useAuth'
+import { useAuth } from '../context/AuthContext'
 import Button from '../components/Button'
 
 const LoginPage = () => {
@@ -20,7 +20,7 @@ const LoginPage = () => {
       navigate(redirectPath, { replace: true })
     } catch (err) {
       console.error(err)
-      setError('Web3Auth 로그인에 실패했습니다. 다시 시도해주세요.')
+      setError('지갑 로그인에 실패했습니다. 다시 시도해주세요.')
     } finally {
       setSubmitting(false)
     }
@@ -42,12 +42,12 @@ const LoginPage = () => {
           <p className="text-xs uppercase tracking-[0.6em] text-white/50">Secure Access</p>
           <h2 className="text-3xl leading-tight">Wallet Login</h2>
           <p className="text-sm text-white/70">
-            CloChain Shop은 Web3Auth(OpenLogin) 기반으로 파트너 지갑을 생성하고 Polygon Amoy에 DID를
-            연결합니다. 로그인하면 지갑 주소가 곧 did:ethr가 되며 QR 발급 시 ownerWallet 필드로 사용됩니다.
+            CloChain Shop은 thirdweb Embedded Wallet 기반 이메일 OTP 로그인으로 파트너 지갑을 생성합니다.
+            로그인하면 지갑 주소가 곧 did:ethr가 되며 QR 발급 시 ownerWallet 필드로 사용됩니다.
           </p>
           <ul className="space-y-1 text-xs text-white/60">
             <li>· chain: eip155:80002 (Polygon Amoy)</li>
-            <li>· session: Web3Auth Modal Pack</li>
+            <li>· session: thirdweb Embedded Wallet</li>
             <li>· DID: did:ethr:&lt;walletAddress&gt;</li>
           </ul>
         </div>

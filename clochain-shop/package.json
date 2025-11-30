@@ -10,8 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@web3auth/base": "^9.7.0",
     "@web3auth/auth": "^10.8.0",
+    "@web3auth/base": "^9.7.0",
     "@web3auth/ethereum-provider": "^9.7.0",
     "@web3auth/single-factor-auth": "^9.5.0",
     "axios": "^1.7.7",
@@ -20,7 +20,8 @@
     "process": "^0.11.10",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "react-router-dom": "^7.0.2"
+    "react-router-dom": "^7.0.2",
+    "thirdweb": "^5.114.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
@@ -28,14 +29,14 @@
     "@types/react": "^19.2.5",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.1",
+    "autoprefixer": "^10.4.20",
     "babel-plugin-react-compiler": "^1.0.0",
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.5.0",
-    "tailwindcss": "^3.4.16",
-    "autoprefixer": "^10.4.20",
     "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.16",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.46.4",
     "vite": "^7.2.4"

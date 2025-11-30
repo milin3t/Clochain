@@ -1,6 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { shortenAddress } from '../api/auth'
-import { useAuth } from '../auth/useAuth'
+import { useAuth } from '../context/AuthContext'
 
 const navItems: Array<{ to: string; label: string }> = [
   { to: '/shop', label: 'Maison' },
@@ -9,6 +8,7 @@ const navItems: Array<{ to: string; label: string }> = [
 
 const Header = () => {
   const { walletAddress, login, logout } = useAuth()
+  const displayAddress = walletAddress ? walletAddress.slice(0, 6) : ''
 
   return (
     <header className="sticky top-0 z-20 border-b border-white/20 bg-pearl/80 backdrop-blur">
@@ -39,13 +39,13 @@ const Header = () => {
             {walletAddress ? (
               <>
                 <span className="font-medium text-gray-500">Wallet</span>
-                <span className="font-mono text-sm text-ink">{shortenAddress(walletAddress)}</span>
+                <span className="font-mono text-sm text-ink">{displayAddress}</span>
                 <button
                   type="button"
                   onClick={logout}
                   className="rounded-full border border-transparent px-3 py-1 text-[10px] tracking-[0.2em] text-ink transition hover:border-ink/40"
                 >
-                  Logout
+                  로그아웃
                 </button>
               </>
             ) : (
@@ -54,7 +54,7 @@ const Header = () => {
                 onClick={login}
                 className="rounded-full bg-ink px-4 py-2 text-[10px] tracking-[0.3em] text-pearl transition hover:bg-dusk"
               >
-                Wallet Login
+                지갑 로그인
               </button>
             )}
           </div>

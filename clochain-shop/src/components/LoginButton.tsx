@@ -1,5 +1,5 @@
 import { shortenAddress } from '../api/auth'
-import { useAuth } from '../auth/useAuth'
+import { useAuth } from '../context/AuthContext'
 
 const LoginButton = () => {
   const { walletAddress, login, logout } = useAuth()
@@ -23,7 +23,7 @@ const LoginButton = () => {
           onClick={login}
           className="rounded-full bg-ink px-6 py-3 text-xs font-semibold uppercase tracking-[0.3em] text-pearl transition hover:bg-dusk"
         >
-          Login with Web3Auth
+          이메일로 지갑 로그인
         </button>
       )}
     </div>

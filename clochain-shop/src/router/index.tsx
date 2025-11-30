@@ -1,11 +1,11 @@
+import type { ReactElement } from 'react'
 import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom'
-import { useAuth } from '../auth/useAuth'
+import { useAuth } from '../context/AuthContext'
 import Header from '../components/Header'
 import ShopHome from '../pages/ShopHome'
 import LoginPage from '../pages/LoginPage'
 import ShopBrand from '../pages/ShopBrand'
 import ProductPage from '../pages/ProductPage'
-import IssuePage from '../pages/IssuePage'
 import VerifyPage from '../pages/VerifyPage'
 
 const AppLayout = () => (
@@ -20,7 +20,7 @@ const AppLayout = () => (
   </div>
 )
 
-const RequireAuth = ({ children }: { children: JSX.Element }) => {
+const RequireAuth = ({ children }: { children: ReactElement }) => {
   const { walletAddress } = useAuth()
   const location = useLocation()
 
@@ -40,14 +40,13 @@ const AppRouter = () => (
       <Route path="verify" element={<VerifyPage />} />
       <Route path=":brand" element={<ShopBrand />} />
       <Route
-        path=":brand/issue"
+        path=":brand/:productId"
         element={
           <RequireAuth>
-            <IssuePage />
+            <ProductPage />
           </RequireAuth>
         }
       />
-      <Route path=":brand/:productId" element={<ProductPage />} />
     </Route>
     <Route path="*" element={<Navigate to="/shop" replace />} />
   </Routes>

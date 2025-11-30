@@ -17,8 +17,8 @@ const ShopHome = () => {
           <Button as="a" href="/shop/login" variant="primary">
             Partner Login
           </Button>
-          <Button as="a" href="/shop/issue" variant="muted">
-            View Issued QR
+          <Button as="a" href="/shop/verify" variant="muted">
+            Verify Authenticity
           </Button>
         </div>
         <LoginButton />
