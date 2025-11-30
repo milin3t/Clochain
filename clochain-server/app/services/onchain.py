@@ -117,9 +117,11 @@ def _to_checksum(address: str) -> str:
 
 def _extract_token_id(contract: Contract, receipt: dict) -> int | None:
   try:
-    events = contract.events.Transfer().process_receipt(
-      receipt, errors=EventLogErrorFlags.DISCARD
-    )
+    discard_flag = getattr(EventLogErrorFlags, "DISCARD", None)
+    if discard_flag is not None:
+      events = contract.events.Transfer().process_receipt(receipt, errors=discard_flag)
+    else:
+      events = contract.events.Transfer().process_receipt(receipt)
   except Web3Exception:
     events = []
   if events:
