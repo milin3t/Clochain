@@ -1,15 +1,14 @@
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-
 from app.api.routes import auth, issue, verify
 from app.core.config import settings
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 
 def create_app() -> FastAPI:
   app = FastAPI(
     title=settings.app_name,
     version="0.1.0",
-    description="CloChain authenticity service (UI-only endpoints wired later).",
+    description="CloChain authenticity service.",
   )
 
   app.add_middleware(
