@@ -1,5 +1,6 @@
 import BrandCard from '../components/BrandCard'
 import Button from '../components/Button'
+import LoginButton from '../components/LoginButton'
 import { brandCatalog } from '../data/brands'
 
 const ShopHome = () => {
@@ -20,6 +21,7 @@ const ShopHome = () => {
             View Issued QR
           </Button>
         </div>
+        <LoginButton />
       </header>
       <div className="grid gap-6 md:grid-cols-3">
         {brandCatalog.map((brand) => (

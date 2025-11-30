@@ -10,11 +10,14 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@web3auth/base": "^7.3.0",
-    "@web3auth/modal": "^7.3.0",
-    "@web3auth/openlogin-adapter": "^7.3.0",
-    "buffer": "^6.0.3",
+    "@web3auth/base": "^9.7.0",
+    "@web3auth/auth": "^10.8.0",
+    "@web3auth/ethereum-provider": "^9.7.0",
+    "@web3auth/single-factor-auth": "^9.5.0",
     "axios": "^1.7.7",
+    "buffer": "^6.0.3",
+    "ethers": "^6.13.4",
+    "process": "^0.11.10",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.0.2"

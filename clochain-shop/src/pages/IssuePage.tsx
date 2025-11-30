@@ -14,7 +14,7 @@ const IssuePage = () => {
   const { brand } = useParams<{ brand?: string }>()
   const navigate = useNavigate()
   const location = useLocation()
-  const { walletAddress, isAuthenticated, isInitializing } = useAuth()
+  const { walletAddress } = useAuth()
   const [result, setResult] = useState<IssueResponse | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -26,20 +26,12 @@ const IssuePage = () => {
   const productLabel = brandInfo?.name ?? brand ?? ''
 
   useEffect(() => {
-    if (!isInitializing && !isAuthenticated) {
+    if (!walletAddress) {
       navigate('/shop/login', { replace: true, state: { from: location.pathname } })
     }
-  }, [isAuthenticated, isInitializing, location.pathname, navigate])
+  }, [walletAddress, location.pathname, navigate])
 
-  if (isInitializing) {
-    return (
-      <div className="rounded-[32px] border border-white/20 bg-white/80 p-8 text-center text-sm text-gray-600">
-        Web3Auth 세션을 확인하는 중입니다...
-      </div>
-    )
-  }
-
-  if (!isAuthenticated) {
+  if (!walletAddress) {
     return null
   }
 

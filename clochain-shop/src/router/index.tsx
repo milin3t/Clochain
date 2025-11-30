@@ -21,18 +21,10 @@ const AppLayout = () => (
 )
 
 const RequireAuth = ({ children }: { children: JSX.Element }) => {
-  const { isAuthenticated, isInitializing } = useAuth()
+  const { walletAddress } = useAuth()
   const location = useLocation()
 
-  if (isInitializing) {
-    return (
-      <div className="page-shell py-10 text-center text-sm text-gray-500">
-        Web3Auth 세션을 확인하는 중입니다...
-      </div>
-    )
-  }
-
-  if (!isAuthenticated) {
+  if (!walletAddress) {
     return <Navigate to="/shop/login" replace state={{ from: location.pathname }} />
   }
 

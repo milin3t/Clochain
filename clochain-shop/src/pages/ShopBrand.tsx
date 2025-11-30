@@ -9,25 +9,17 @@ import { findBrand } from '../data/brands'
 const ShopBrand = () => {
   const { brand: brandSlug } = useParams<{ brand?: string }>()
   const brand = brandSlug ? findBrand(brandSlug) : undefined
-  const { walletAddress, isAuthenticated, isInitializing } = useAuth()
+  const { walletAddress } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
 
   useEffect(() => {
-    if (!isInitializing && !isAuthenticated) {
+    if (!walletAddress) {
       navigate('/shop/login', { replace: true, state: { from: location.pathname } })
     }
-  }, [isAuthenticated, isInitializing, location.pathname, navigate])
+  }, [walletAddress, location.pathname, navigate])
 
-  if (isInitializing) {
-    return (
-      <div className="rounded-[32px] border border-white/20 bg-white/70 p-8 text-center text-sm text-gray-600">
-        Web3Auth 세션을 확인하는 중입니다...
-      </div>
-    )
-  }
-
-  if (!isAuthenticated) {
+  if (!walletAddress) {
     return null
   }
 
@@ -45,7 +37,7 @@ const ShopBrand = () => {
   return (
     <section className="space-y-8">
       <div className="flex items-center justify-end">
-        {isAuthenticated && walletAddress && (
+        {walletAddress && (
           <div className="rounded-full border border-white/60 bg-white/70 px-4 py-2 text-right text-[10px] uppercase tracking-[0.3em] text-gray-500">
             <p className="text-[10px]">Connected Wallet</p>
             <p className="font-mono text-sm text-ink">{shortenAddress(walletAddress)}</p>

@@ -5,7 +5,7 @@ import { useAuth } from '../auth/useAuth'
 import Button from '../components/Button'
 
 const LoginPage = () => {
-  const { connect, disconnect, walletAddress, isAuthenticated, isInitializing } = useAuth()
+  const { walletAddress, login, logout } = useAuth()
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const location = useLocation()
@@ -16,7 +16,7 @@ const LoginPage = () => {
     setSubmitting(true)
     setError(null)
     try {
-      await connect()
+      await login()
       navigate(redirectPath, { replace: true })
     } catch (err) {
       console.error(err)
@@ -26,10 +26,10 @@ const LoginPage = () => {
     }
   }
 
-  const handleDisconnect = async () => {
+  const handleDisconnect = () => {
     setSubmitting(true)
     try {
-      await disconnect()
+      logout()
     } finally {
       setSubmitting(false)
     }
@@ -55,11 +55,7 @@ const LoginPage = () => {
           <div className="rounded-[24px] border border-white/30 bg-white/10 p-6">
             <p className="text-xs uppercase tracking-[0.4em] text-white/50">Status</p>
             <p className="mt-2 text-sm text-white">
-              {isInitializing
-                ? 'Web3Auth 세션을 불러오는 중입니다...'
-                : isAuthenticated && walletAddress
-                  ? `지갑 연결됨: ${shortenAddress(walletAddress)}`
-                  : '지갑에 로그인하면 QR 발급이 활성화됩니다.'}
+              {walletAddress ? `지갑 연결됨: ${shortenAddress(walletAddress)}` : '지갑에 로그인하면 QR 발급이 활성화됩니다.'}
             </p>
           </div>
           {error && <p className="rounded-2xl bg-red-500/10 px-4 py-3 text-sm text-red-200">{error}</p>}
@@ -67,10 +63,10 @@ const LoginPage = () => {
             type="button"
             fullWidth
             variant="light"
-            onClick={isAuthenticated ? handleDisconnect : handleConnect}
-            disabled={submitting || isInitializing}
+            onClick={walletAddress ? handleDisconnect : handleConnect}
+            disabled={submitting}
           >
-            {isAuthenticated ? '로그아웃' : '지갑으로 로그인하기'}
+            {walletAddress ? '로그아웃' : '지갑으로 로그인하기'}
           </Button>
           <p className="text-xs text-white/50">
             로그인 후에는 이전 페이지로 돌아가거나 /shop으로 이동합니다.
