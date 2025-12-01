@@ -77,22 +77,33 @@ const TransferPage = () => {
     } catch (error) {
       console.error(error)
       setStatus('error')
-      const messageText = error instanceof Error ? error.message.toLowerCase() : ''
+      const rawMessage = extractErrorMessage(error)
+      const normalizedMessage = rawMessage.toLowerCase()
       let detail = '이전에 실패했습니다. 지갑 주소를 확인하고 다시 시도하세요.'
-      if (error instanceof Error) {
-        if (error.message === 'WALLET_REQUIRED') {
-          detail = '지갑 연결이 필요합니다. 로그인 후 다시 시도하세요.'
-        } else if (error.message === 'WALLET_MISMATCH') {
-          detail = '현재 로그인한 지갑이 NFT 소유자와 다릅니다.'
-        } else if (error.message === 'INVALID_TOKEN_ID') {
-          detail = '잘못된 토큰 ID입니다. 다시 시도하세요.'
-        } else if (messageText.includes('insufficient funds')) {
-          detail = '가스비가 부족합니다. Polygon Amoy MATIC을 지갑에 충전한 뒤 다시 시도하세요.'
-          setToast({ type: 'error', text: '가스비 잔고가 부족합니다.' })
-        }
+      if (rawMessage === 'WALLET_REQUIRED') {
+        detail = '지갑 연결이 필요합니다. 로그인 후 다시 시도하세요.'
+      } else if (rawMessage === 'WALLET_MISMATCH') {
+        detail = '현재 로그인한 지갑이 NFT 소유자와 다릅니다.'
+      } else if (rawMessage === 'INVALID_TOKEN_ID') {
+        detail = '잘못된 토큰 ID입니다. 다시 시도하세요.'
+      } else if (normalizedMessage.includes('insufficient funds')) {
+        detail = '가스비가 부족합니다. Polygon Amoy MATIC을 지갑에 충전한 뒤 다시 시도하세요.'
+        setToast({ type: 'error', text: '가스비 잔고가 부족합니다.' })
       }
       setMessage(detail)
     }
+  }
+
+  const extractErrorMessage = (err: unknown): string => {
+    if (err instanceof Error) {
+      return err.message
+    }
+    if (typeof err === 'object' && err !== null) {
+      const data = err as { message?: unknown; reason?: unknown; error?: unknown }
+      const value = data.reason ?? data.message ?? data.error
+      if (typeof value === 'string') return value
+    }
+    return typeof err === 'string' ? err : ''
   }
 
   return (
