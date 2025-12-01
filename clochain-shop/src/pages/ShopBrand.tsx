@@ -45,7 +45,7 @@ const ShopBrand = () => {
         )}
       </div>
       <div className="space-y-4 text-center">
-        <p className="text-xs uppercase tracking-[0.5em] text-gray-500">Maison Collection</p>
+        <p className="text-xs uppercase tracking-[0.5em] text-gray-500">매장 컬렉션</p>
         <h2 className="text-4xl tracking-[0.4em]">{brand.name}</h2>
         <p className="mx-auto max-w-2xl text-sm text-gray-600">{brand.narrative}</p>
         <p className="text-xs uppercase tracking-[0.4em] text-gray-500">

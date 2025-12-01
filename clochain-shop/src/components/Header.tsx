@@ -2,7 +2,7 @@ import { NavLink } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
 const navItems: Array<{ to: string; label: string }> = [
-  { to: '/shop', label: 'Maison' },
+  { to: '/shop', label: '매장' },
   { to: '/shop/verify', label: 'Verify' },
 ]
 
@@ -35,29 +35,27 @@ const Header = () => {
               </NavLink>
             ))}
           </nav>
-          <div className="flex items-center gap-2 rounded-full border border-ink/10 bg-white/60 px-4 py-2 text-left text-xs uppercase tracking-[0.2em] text-gray-600">
-            {walletAddress ? (
-              <>
-                <span className="font-medium text-gray-500">Wallet</span>
-                <span className="font-mono text-sm text-ink">{displayAddress}</span>
-                <button
-                  type="button"
-                  onClick={logout}
-                  className="rounded-full border border-transparent px-3 py-1 text-[10px] tracking-[0.2em] text-ink transition hover:border-ink/40"
-                >
-                  로그아웃
-                </button>
-              </>
-            ) : (
+          {walletAddress ? (
+            <div className="flex items-center gap-3 rounded-full bg-ink px-4 py-2 text-[10px] uppercase tracking-[0.3em] text-pearl shadow-sm">
+              <span className="font-medium text-pearl/70">지갑</span>
+              <span className="font-mono text-sm text-white">{displayAddress}</span>
               <button
                 type="button"
-                onClick={login}
-                className="rounded-full bg-ink px-4 py-2 text-[10px] tracking-[0.3em] text-pearl transition hover:bg-dusk"
+                onClick={logout}
+                className="rounded-full border border-white/30 px-3 py-1 text-[10px] tracking-[0.2em] text-white transition hover:bg-white/10"
               >
-                지갑 로그인
+                로그아웃
               </button>
-            )}
-          </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={login}
+              className="rounded-full border border-ink/60 px-6 py-2 text-[10px] font-semibold uppercase tracking-[0.35em] text-ink transition hover:bg-ink hover:text-pearl"
+            >
+              이메일로 지갑 로그인
+            </button>
+          )}
         </div>
       </div>
     </header>

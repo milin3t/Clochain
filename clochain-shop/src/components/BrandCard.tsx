@@ -19,7 +19,7 @@ const BrandCard = ({ brand }: BrandCardProps) => {
         </div>
         <p className="text-sm text-gray-600">{brand.description}</p>
         <Button as={Link} to={`/shop/${brand.slug}`} variant="primary">
-          View Maison
+          가게 입장하기
         </Button>
       </div>
     </article>
