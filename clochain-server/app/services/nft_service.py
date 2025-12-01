@@ -1,10 +1,11 @@
 from fastapi import HTTPException, status
+import httpx
 
 from app.core.config import settings
 from app.core.did import did_to_wallet, to_did
 from app.core.hmac_utils import decode_short_token, encode_short_token, sign_payload
 from app.db import crud
-from app.services.onchain import mint_via_web3
+from app.services.onchain import fetch_wallet_tokens_onchain, mint_via_web3
 from app.services.pinata_service import PinataService
 
 
@@ -76,16 +77,39 @@ class NFTService:
     return {"txHash": tx_hash}
 
   def list_wallet_nfts(self, wallet_address: str):
-    nfts = crud.list_nfts_by_owner(self.session, wallet_address)
-    return [
-      {
+    normalized_wallet = wallet_address.lower()
+    stored_nfts = crud.list_nfts_by_owner(self.session, normalized_wallet)
+    result_map: dict[str, dict] = {
+      nft.token_id: {
         "tokenId": nft.token_id,
         "brand": nft.brand,
         "productId": nft.product_id,
         "tokenURI": f"ipfs://{nft.cid}",
       }
-      for nft in nfts
-    ]
+      for nft in stored_nfts
+    }
+    onchain_entries: list[dict] = []
+    try:
+      onchain_entries = fetch_wallet_tokens_onchain(normalized_wallet)
+    except HTTPException:
+      onchain_entries = []
+
+    for entry in onchain_entries:
+      token_id = entry.get("tokenId")
+      if not token_id or token_id in result_map:
+        continue
+      token_uri = entry.get("tokenURI") or ""
+      metadata = self._load_metadata_from_token_uri(token_uri)
+      brand, product_id = self._extract_fields_from_metadata(metadata)
+      result_map[token_id] = {
+        "tokenId": token_id,
+        "brand": brand or "Unknown",
+        "productId": product_id or "N/A",
+        "tokenURI": token_uri or "",
+      }
+
+    # sort by numeric tokenId desc for consistent UX
+    return sorted(result_map.values(), key=lambda item: int(item["tokenId"]), reverse=True)
 
   def _build_metadata(self, payload: dict, short_token: str) -> dict:
     issued_at = payload.get("issuedAt")
@@ -108,6 +132,43 @@ class NFTService:
   def _reconstruct_short_token(self, payload: dict) -> str:
     signature = sign_payload(payload)
     return encode_short_token(payload, signature)
+
+  def _load_metadata_from_token_uri(self, token_uri: str) -> dict | None:
+    if not token_uri:
+      return None
+    url = self._resolve_token_uri(token_uri)
+    if not url:
+      return None
+    try:
+      response = httpx.get(url, timeout=10)
+      response.raise_for_status()
+      return response.json()
+    except httpx.HTTPError:
+      return None
+
+  def _resolve_token_uri(self, token_uri: str) -> str | None:
+    if token_uri.startswith("ipfs://"):
+      cid = token_uri.replace("ipfs://", "")
+      return f"https://gateway.pinata.cloud/ipfs/{cid}"
+    return token_uri
+
+  def _extract_fields_from_metadata(self, metadata: dict | None) -> tuple[str | None, str | None]:
+    if not metadata:
+      return None, None
+    attributes = metadata.get("attributes") or []
+    attr_map = {}
+    for attr in attributes:
+      name = attr.get("trait_type")
+      value = attr.get("value")
+      if name and value is not None:
+        attr_map[name] = value
+    brand = attr_map.get("brand") or metadata.get("brand")
+    product_id = attr_map.get("productId") or metadata.get("productId")
+    if not product_id and metadata.get("name"):
+      name_str = str(metadata["name"])
+      if " " in name_str:
+        product_id = name_str.split(" ", 1)[1]
+    return brand, product_id
 
   def register_nft(self, short_token: str, wallet_address: str):
     normalized_wallet = wallet_address.lower()

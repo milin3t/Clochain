@@ -35,6 +35,27 @@ ABI = [
     "stateMutability": "nonpayable",
     "type": "function",
   },
+  {
+    "inputs": [],
+    "name": "totalMinted",
+    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+    "stateMutability": "view",
+    "type": "function",
+  },
+  {
+    "inputs": [{"internalType": "uint256", "name": "tokenId", "type": "uint256"}],
+    "name": "ownerOf",
+    "outputs": [{"internalType": "address", "name": "", "type": "address"}],
+    "stateMutability": "view",
+    "type": "function",
+  },
+  {
+    "inputs": [{"internalType": "uint256", "name": "tokenId", "type": "uint256"}],
+    "name": "tokenURI",
+    "outputs": [{"internalType": "string", "name": "", "type": "string"}],
+    "stateMutability": "view",
+    "type": "function",
+  },
 ]
 
 
@@ -134,3 +155,28 @@ def _extract_token_id(contract: Contract, receipt: dict) -> int | None:
   if events:
     return int(events[0]["args"]["tokenId"])
   return None
+
+
+def fetch_wallet_tokens_onchain(wallet_address: str) -> list[dict]:
+  w3, contract, _ = _init_web3()
+  normalized_wallet = wallet_address.lower()
+  try:
+    total_minted = int(contract.functions.totalMinted().call())
+  except Web3Exception as exc:  # noqa: BLE001
+    raise HTTPException(status_code=502, detail="Unable to query total minted supply") from exc
+
+  owned_tokens: list[dict] = []
+  for token_id in range(1, total_minted + 1):
+    try:
+      owner = contract.functions.ownerOf(token_id).call()
+    except (ContractLogicError, Web3Exception):
+      continue
+    if owner.lower() != normalized_wallet:
+      continue
+    token_uri = ""
+    try:
+      token_uri = contract.functions.tokenURI(token_id).call()
+    except (ContractLogicError, Web3Exception):
+      token_uri = ""
+    owned_tokens.append({"tokenId": str(token_id), "tokenURI": token_uri})
+  return owned_tokens
