@@ -5,6 +5,7 @@ import ScanPage from '../pages/ScanPage'
 import WardrobePage from '../pages/WardrobePage'
 import NFTDetailPage from '../pages/NFTDetailPage'
 import TransferPage from '../pages/TransferPage'
+import NotFoundPage from '../pages/NotFoundPage'
 
 const RequireAuth = () => {
   const { walletAddress } = useAuth()
@@ -35,7 +36,7 @@ export const AppRouter = () => {
         { path: '/transfer/:tokenId', element: <TransferPage /> },
       ],
     },
-    { path: '*', element: <Navigate to="/wardrobe" replace /> },
+    { path: '*', element: <NotFoundPage /> },
   ])
 
   return element

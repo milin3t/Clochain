@@ -7,6 +7,7 @@ import LoginPage from '../pages/LoginPage'
 import ShopBrand from '../pages/ShopBrand'
 import ProductPage from '../pages/ProductPage'
 import VerifyPage from '../pages/VerifyPage'
+import NotFoundPage from '../pages/NotFoundPage'
 
 const AppLayout = () => (
   <div className="min-h-screen bg-pearl text-ink">
@@ -48,7 +49,7 @@ const AppRouter = () => (
         }
       />
     </Route>
-    <Route path="*" element={<Navigate to="/shop" replace />} />
+    <Route path="*" element={<NotFoundPage />} />
   </Routes>
 )
 
