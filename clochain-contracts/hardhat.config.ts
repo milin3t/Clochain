@@ -7,6 +7,10 @@ dotenvConfig();
 const amoyRpcUrl = process.env.AMOY_RPC_URL || "https://polygon-amoy.drpc.org";
 const serverPrivateKey =
   process.env.SERVER_PRIVATE_KEY || process.env.PRIVATE_KEY || "";
+const etherscanApiKey =
+  process.env.ETHERSCAN_API_KEY ||
+  process.env.POLYGONSCAN_API_KEY ||
+  "";
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -24,9 +28,10 @@ const config: HardhatUserConfig = {
     },
   },
   etherscan: {
-    apiKey: {
-      polygonAmoy: process.env.POLYGONSCAN_API_KEY || "",
-    },
+    apiKey: etherscanApiKey,
+  },
+  sourcify: {
+    enabled: false,
   },
 };
 
