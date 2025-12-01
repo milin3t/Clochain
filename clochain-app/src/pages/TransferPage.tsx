@@ -70,6 +70,7 @@ const TransferPage = () => {
     } catch (error) {
       console.error(error)
       setStatus('error')
+      const messageText = error instanceof Error ? error.message.toLowerCase() : ''
       let detail = '이전에 실패했습니다. 지갑 주소를 확인하고 다시 시도하세요.'
       if (error instanceof Error) {
         if (error.message === 'WALLET_REQUIRED') {
@@ -78,6 +79,8 @@ const TransferPage = () => {
           detail = '현재 로그인한 지갑이 NFT 소유자와 다릅니다.'
         } else if (error.message === 'INVALID_TOKEN_ID') {
           detail = '잘못된 토큰 ID입니다. 다시 시도하세요.'
+        } else if (messageText.includes('insufficient funds')) {
+          detail = '가스비가 부족합니다. Polygon Amoy MATIC을 지갑에 충전한 뒤 다시 시도하세요.'
         }
       }
       setMessage(detail)
