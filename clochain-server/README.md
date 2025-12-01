@@ -12,21 +12,13 @@ FastAPI 백엔드로 CloChain v2의 DID 로그인, QR 발급/검증, Pinata 메�
 
 ## 환경 변수
 
-`.env` 파일 예시:
+`.env` 파일 예시(`.env.example` 참고, 현재는 DB 연결만 포함됨):
 
 ```
-APP_NAME=CloChain Server v2
-DATABASE_URL=sqlite:///./clochain.db
-JWT_SECRET=...
-HMAC_SECRET=...
-CORS_ORIGINS=https://clochain-app.vercel.app
-PINATA_API_KEY=...
-PINATA_API_SECRET=...   # 또는 PINATA_SECRET
-PINATA_JWT=...          # 선택, Bearer 사용
+DATABASE_URL=postgresql+psycopg://<user>:<pass>@<host>:<port>/<db>
 ```
 
-- `PINATA_JWT`가 있으면 Bearer 헤더로 업로드를 수행하고, 없으면 API Key/Secret 헤더를 사용합니다.
-- `PINATA_JWT`도 없고 키가 기본값이면 서버는 자동으로 mock CID 를 생성해 개발 편의성을 유지합니다.
+추가 환경 변수(JWT, Pinata, RPC 등)는 아래 섹션을 참고해 개별적으로 설정하세요.
 
 ### 온체인 mint 설정
 
@@ -49,7 +41,7 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
 
-기본 DB는 `sqlite:///./clochain.db`입니다. Railway 등에서는 PostgreSQL URL을 넣어주세요.
+기본 개발 환경은 SQLite(`sqlite:///./clochain.db`)로 동작하지만, 운영에서는 Railway PostgreSQL 커넥션을 `DATABASE_URL`에 입력하세요. 서버는 `postgres://` 또는 `postgresql://` 형식을 자동으로 `postgresql+psycopg://`로 변환하므로 Railway에서 받은 문자열을 그대로 넣으면 됩니다.
 
 ## 엔드포인트 개요
 
