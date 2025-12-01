@@ -86,7 +86,7 @@ const TransferPage = () => {
         detail = '현재 로그인한 지갑이 NFT 소유자와 다릅니다.'
       } else if (rawMessage === 'INVALID_TOKEN_ID') {
         detail = '잘못된 토큰 ID입니다. 다시 시도하세요.'
-      } else if (normalizedMessage.includes('insufficient funds')) {
+      } else if (normalizedMessage.includes('insufficient funds') || isInsufficientFundsError(error)) {
         detail = '가스비가 부족합니다. Polygon Amoy MATIC을 지갑에 충전한 뒤 다시 시도하세요.'
         setToast({ type: 'error', text: '가스비 잔고가 부족합니다.' })
       }
@@ -104,6 +104,23 @@ const TransferPage = () => {
       if (typeof value === 'string') return value
     }
     return typeof err === 'string' ? err : ''
+  }
+
+  const isInsufficientFundsError = (err: unknown): boolean => {
+    if (typeof err === 'object' && err !== null) {
+      const data = err as { code?: unknown; cause?: unknown }
+      if (data.code === -32000) {
+        return true
+      }
+      if (data.cause && typeof data.cause === 'object') {
+        const cause = data.cause as { code?: unknown; message?: unknown }
+        if (cause.code === -32000) return true
+        if (typeof cause.message === 'string' && cause.message.toLowerCase().includes('insufficient funds')) {
+          return true
+        }
+      }
+    }
+    return false
   }
 
   return (
