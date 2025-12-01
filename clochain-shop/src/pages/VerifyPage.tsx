@@ -1,10 +1,25 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Scanner, type IDetectedBarcode } from '@yudiel/react-qr-scanner'
 import { useSearchParams } from 'react-router-dom'
 import axios from 'axios'
 import Button from '../components/Button'
 import Input from '../components/Input'
 import { verifyProduct } from '../api/verify'
 import type { VerifyResponse } from '../types/verify'
+
+const extractShortToken = (value: string) => {
+  if (!value) return null
+  try {
+    const maybeUrl = new URL(value)
+    const tokenValue = maybeUrl.searchParams.get('q') ?? maybeUrl.searchParams.get('token')
+    if (tokenValue) return tokenValue
+  } catch {
+    // ignore invalid URLs
+  }
+  const match = value.match(/q=([^&]+)/)
+  if (match) return match[1]
+  return value
+}
 
 const VerifyPage = () => {
   const [searchParams] = useSearchParams()
@@ -17,16 +32,12 @@ const VerifyPage = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<VerifyResponse | null>(null)
+  const [scanMessage, setScanMessage] = useState('')
+  const processingRef = useRef(false)
 
-  useEffect(() => {
-    if (initialToken) {
-      void handleVerify(initialToken, true)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialToken])
-
-  const handleVerify = async (tokenValue?: string, auto = false) => {
-    const trimmedToken = (tokenValue ?? token).trim()
+  const handleVerify = useCallback(async (tokenValue?: string, auto = false) => {
+    const value = tokenValue ?? token
+    const trimmedToken = value.trim()
     if (!trimmedToken) {
       setError('short token을 입력해주세요.')
       return
@@ -57,7 +68,35 @@ const VerifyPage = () => {
     } finally {
       setLoading(false)
     }
-  }
+  }, [token])
+
+  useEffect(() => {
+    if (initialToken) {
+      void handleVerify(initialToken, true)
+    }
+  }, [handleVerify, initialToken])
+
+  const handleScan = useCallback(
+    async (scanResult: IDetectedBarcode[]) => {
+      if (!scanResult?.length || processingRef.current) return
+      const rawValue = scanResult[0]?.rawValue
+      const scannedToken = rawValue ? extractShortToken(rawValue) : null
+      if (!scannedToken) return
+      processingRef.current = true
+      setScanMessage('QR을 인식했습니다. 검증 중...')
+      setToken(scannedToken)
+      try {
+        await handleVerify(scannedToken, true)
+        setScanMessage('검증이 완료되었습니다. 결과를 확인하세요.')
+      } catch (err) {
+        console.error('QR verify failed', err)
+        setScanMessage('QR 검증에 실패했습니다. 다시 스캔해 주세요.')
+      } finally {
+        processingRef.current = false
+      }
+    },
+    [handleVerify],
+  )
 
   return (
     <section className="space-y-8">
@@ -114,6 +153,26 @@ const VerifyPage = () => {
             <p className="mt-4 text-sm text-red-600">Reason: {error}</p>
           )}
         </div>
+      </div>
+
+      <div className="rounded-[32px] border border-white/40 bg-white/70 p-8 text-center">
+        <p className="text-xs uppercase tracking-[0.5em] text-gray-500">QR Scan</p>
+        <p className="mt-2 text-sm text-gray-600">
+          QR 코드를 카메라에 비추면 short token이 자동으로 인식되고 검증이 진행됩니다.
+        </p>
+        <div className="mt-6 flex justify-center">
+          <div className="w-full max-w-md overflow-hidden rounded-[28px] border border-ink/10 bg-black/70">
+            <Scanner
+              onScan={handleScan}
+              onError={(scanError) => console.error('Scanner error', scanError)}
+              components={{ torch: true }}
+              styles={{
+                container: { width: '100%', height: '320px' },
+              }}
+            />
+          </div>
+        </div>
+        {scanMessage && <p className="mt-4 text-sm text-gray-600">{scanMessage}</p>}
       </div>
     </section>
   )
