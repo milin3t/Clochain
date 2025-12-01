@@ -1,4 +1,4 @@
-import { type FormEvent, useState } from 'react'
+import { type FormEvent, useEffect, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useActiveAccount } from 'thirdweb/react'
 import Header from '../components/Header'
@@ -23,8 +23,15 @@ const TransferPage = () => {
   const [recipient, setRecipient] = useState('')
   const [status, setStatus] = useState<'idle' | 'pending' | 'success' | 'error'>('idle')
   const [message, setMessage] = useState('')
+  const [toast, setToast] = useState<{ type: 'info' | 'error'; text: string } | null>(null)
   const nftName = (location.state as { nft?: { brand?: string; productId?: string } } | undefined)?.nft
   const label = nftName ? `${nftName.brand ?? ''} ${nftName.productId ?? ''}`.trim() : `Token #${tokenId}`
+
+  useEffect(() => {
+    if (!toast) return
+    const timer = setTimeout(() => setToast(null), 2500)
+    return () => clearTimeout(timer)
+  }, [toast])
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault()
@@ -81,6 +88,7 @@ const TransferPage = () => {
           detail = '잘못된 토큰 ID입니다. 다시 시도하세요.'
         } else if (messageText.includes('insufficient funds')) {
           detail = '가스비가 부족합니다. Polygon Amoy MATIC을 지갑에 충전한 뒤 다시 시도하세요.'
+          setToast({ type: 'error', text: '가스비 잔고가 부족합니다.' })
         }
       }
       setMessage(detail)
@@ -128,6 +136,17 @@ const TransferPage = () => {
           )}
         </section>
       </main>
+      {toast && (
+        <div
+          className={`pointer-events-none fixed inset-x-0 bottom-6 mx-auto w-[90%] max-w-sm rounded-2xl px-4 py-3 text-center text-sm font-semibold transition ${
+            toast.type === 'error'
+              ? 'bg-rose-500/90 text-white shadow-[0_10px_30px_rgba(244,63,94,0.4)]'
+              : 'bg-slate-700/90 text-white'
+          }`}
+        >
+          {toast.text}
+        </div>
+      )}
     </div>
   )
 }
