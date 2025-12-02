@@ -1,65 +1,39 @@
-# CloChain v2 (thirdweb + Wallet DID)
+# CloChain
 
-CloChain은 의류 QR을 기반으로 사용자가 직접 NFT 정품 인증을 등록하고, thirdweb 지갑(DID)으로 소유권을 증명·양도·검증하는 시스템입니다. 이 리포지토리 모노레포로, Shop/App/Server/Contracts 네 영역을 한 번에 관리합니다.
+정품 인증서를 QR과 고객 지갑에 담아두는 서비스입니다. 매장에서 발급한 QR을 고객 앱이 스캔하면, 블록체인에 영구 보관된 “정품 NFT”가 지갑으로 들어와 언제든 소유권을 증명할 수 있습니다.
 
-## Monorepo 구조
+- CloChain Shop: https://clochain-shop.vercel.app
+- CloChain App: https://clochain-app.vercel.app
+- Tracking Transaction : 0x74a7010b5E1bD6b1Baa7F6841A16c66DF6b7e191
 
-```
-root/
-├─ clochain-shop/              # React(Vite) QR 발급/검증 UI (Vercel)
-├─ clochain-app/               # React(Vite, PWA) 스캔/등록/지갑/양도 (Vercel)
-├─ clochain-server/            # FastAPI 백엔드 (Railway 등)
-└─ clochain-contracts/         # Hardhat ERC-721 (Polygon Amoy)
-```
+## CloChain이 하는 일
 
-각 디렉터리의 README에 세부 개발 방법이 정리되어 있습니다.
+1. **매장에서 QR 발급** – 매장 직원이 CloChain Shop 화면에서 제품 정보를 입력하면, 서버가 해당 정보를 서명한 QR과 short_token을 생성합니다.
+2. **고객이 QR 등록** – 고객은 CloChain App에서 QR을 스캔해 NFT를 자신의 지갑으로 등록합니다.
+3. **누구나 검증** – QR이나 short_token만 있으면 CloChain Shop에서 제품 정보와 현재 소유자를 바로 확인할 수 있습니다.
+4. **양도도 간편하게** – NFT는 Polygon 블록체인에 올라가 있기 때문에, 고객이 새로운 지갑으로 transfer하면 소유권도 즉시 바뀝니다.
 
-## End-to-End 플로우
+## 구성 요소
 
-1. **thirdweb 로그인**  
-   App에서 이메일/소셜 로그인을 하면 ThirdWeb이 wallet/private key를 생성하고 DID(`did:ethr:<wallet>`)를 획득합니다. 서버 `POST /auth/wallet/*`를 거쳐 JWT 세션을 발급받습니다.
+- **CloChain Shop** – 매장 전용 화면입니다. QR을 발급하고 short_token을 검증하는 역할만 하며, 지갑 연결은 필요 없습니다.
+- **CloChain App** – 고객용 PWA입니다. QR 스캔, 워드로브(NFT 목록) 확인, 소유권 이전까지 담당합니다.
+- **CloChain Server** – DID 로그인, QR 발급/검증, NFT 등록 기록, Pinata 업로드, Polygon mint를 담당합니다.
+- **CloChain Contracts** – Polygon Amoy에 배포된 ERC-721 컨트랙트입니다. 서버 지갑만 mint할 수 있으며, 사용자는 transfer만 직접 서명합니다.
 
-2. **QR 발급 (Shop)**  
-   브랜드 스태프가 `/shop/:brand/issue`에서 brand/productId/purchaseAt/ownerWallet을 입력 → 서버 `POST /issue` 호출 → payload + signature + short_token + QR 이미지 확보. 이 short_token이 고객에게 전달됩니다.
+각 디렉터리의 README에 세부 흐름과 정책을 정리해 두었습니다.
 
-3. **QR 스캔 & NFT 등록 (App)**  
-   고객이 QR을 스캔하여 short_token을 server `POST /nft/register`로 전달 → 서버가 payload 검증 후 Pinata에 metadata 업로드 → 서버 지갑이 `mintAuthenticityToken(userWallet, tokenURI)`를 실행 → tokenId/txHash가 응답으로 돌아와 워드로브가 갱신됩니다.
+## 왜 CloChain인가?
 
-4. **소유권 검증**  
-   누구든 `/shop/verify` 혹은 서버 `GET /verify`로 short_token을 검증하고, 서버는 payload + signature 확인 후 Polygon `ownerOf(tokenId)`를 조회해 현재 소유자와 metadata 정보를 보여줍니다.
+- **고객**은 정품 인증서를 자신의 지갑에 보관함으로써 분실 위험이 없습니다.
+- **브랜드**는 QR 발급 기록과 short_token을 통해 AS·리세일 상황에서도 제품을 추적할 수 있습니다.
+- **검증자**는 QR 하나만으로 “이 제품이 CloChain에서 발급한 정품인지” 즉시 확인할 수 있습니다.
 
-5. **소유권 이전**  
-   App의 `/transfer/:tokenId`에서 thirdweb 지갑이 `transferFrom`을 직접 서명 → 완료 후 `POST /nft/record-transfer`로 DB에 이력 저장. 최초 발급자 정보(`firstOwnerWallet`)는 nfts 테이블과 metadata에 영구 보존됩니다.
+CloChain은 QR·서버·블록체인 세 요소를 묶어 “정품 인증”이라는 목적을 단순하고 명확하게 제공합니다.
 
-## Tech Stack
+## 아키텍처 한눈에 보기
 
-- **Frontend (Shop/App)**  
-  - React 19 + Vite + TypeScript + TailwindCSS  
-  - React Router, Axios, QR 스캐너(`@yudiel/react-qr-scanner`)  
-  - thirdweb + Thirdweb SDK로 Polygon Amoy 트랜잭션 직접 서명
-- **Backend**  
-  - FastAPI + SQLAlchemy + SQLite/PostgreSQL  
-  - JWT 기반 세션, HMAC-SHA256 short_token 서명, Pinata API(또는 JWT)로 metadata 업로드
-- **Smart Contract**  
-  - Solidity 0.8.24, Hardhat, OpenZeppelin ERC721URIStorage  
-  - Optional server-signature enforcement, payload hash 재사용 방지
+- **프런트엔드 (Vercel)**: Shop/App 모두 React 19 + Vite + Tailwind로 구현되어 있으며, Axios로 FastAPI 서버와 통신합니다. App은 thirdweb SDK를 사용해 In-App Wallet 로그인과 Polygon transfer 서명을 처리합니다.
+- **백엔드 (Railway)**: FastAPI + PostgreSQL 조합으로 DID 인증, QR 발급/검증, NFT 등록 기록을 담당합니다. Pinata(IPFS)에 metadata를 저장하고 Polygon Amoy 컨트랙트에 mint 요청을 보냅니다.
+- **블록체인 계층**: Polygon Amoy 네트워크에 배포된 `CloChainAuthenticity` ERC-721 컨트랙트는 서버 지갑만 mint할 수 있게 `Ownable`로 제한되어 있습니다. 사용자는 transfer 시 thirdweb 지갑으로 직접 서명합니다.
 
-## 빠른 시작
-
-1. **서버**: `cd clochain-server && python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt && uvicorn app.main:app --reload`
-2. **Shop/App**: 각 디렉터리에서 `npm install && npm dev`
-3. **Contracts**: `cd contracts && npm install && npm run compile`
-
-필수 환경 변수:
-
-- `clochain-server`: `JWT_SECRET`, `HMAC_SECRET`, `DATABASE_URL`, `PINATA_API_KEY`/`PINATA_API_SECRET` 또는 `PINATA_JWT`, `RPC_URL`, `SERVER_PRIVATE_KEY`, `SERVER_WALLET_ADDRESS`, `CONTRACT_ADDRESS`
-- `clochain-app`: `VITE_CLOCHAIN_API_URL`, `VITE_TW_CLIENT_ID`, `VITE_CONTRACT_ADDRESS`
-- `clochain-shop`: `VITE_CLOCHAIN_API_URL`, `VITE_TW_CLIENT_ID`
-- `contracts`: `POLYGON_AMOY_RPC_URL`, `PRIVATE_KEY`, `ETHERSCAN_API_KEY`
-
-## 규칙 (요약)
-
-- 모든 DID는 `did:ethr:<wallet>` 형태만 사용
-- NFT mint/transfer는 **항상 사용자 지갑(thirdweb)** 이 서명
-- 서버는 QR/HMAC/metadata/DB 기록만 담당하며, short_token을 `/shop/verify?q=<token>` URL 형태로만 노출
-- 명세 외 API/구조를 추가하지 않으며, 모든 변경 내역은 `CHANGELOG.md`에 기록
+이 모노레포는 위 요소를 모두 포함하고 있어, QR 발급부터 온체인 소유권 관리까지 전체 플로우를 한 곳에서 확인할 수 있습니다.
