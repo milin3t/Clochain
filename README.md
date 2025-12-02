@@ -15,7 +15,7 @@
 
 ## 구성 요소
 
-- **CloChain Shop** – 매장 전용 화면입니다. QR을 발급하고 short_token을 검증하는 역할만 하며, 지갑 연결은 필요 없습니다.
+- **CloChain Shop** – 매장 전용 화면입니다. QR을 발급(물건 구매)하고 short_token을 검증하는 역할을 합니다.
 - **CloChain App** – 고객용 PWA입니다. QR 스캔, 워드로브(NFT 목록) 확인, 소유권 이전까지 담당합니다.
 - **CloChain Server** – DID 로그인, QR 발급/검증, NFT 등록 기록, Pinata 업로드, Polygon mint를 담당합니다.
 - **CloChain Contracts** – Polygon Amoy에 배포된 ERC-721 컨트랙트입니다. 서버 지갑만 mint할 수 있으며, 사용자는 transfer만 직접 서명합니다.
